@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">WuZiQi</string>
+    <string name="pve">1 Player</string>
+    <string name="pvp">2 Players</string>
+    
+    <string name="pref">Preferences</string>
+    <string name="overlines">Overlines count as</string>
+    <string name="aiFirst">Computer first</string>
+
+    <string-array name="overlines_array">
+        <item>None</item>
+        <item>Lost</item>
+        <item>Winning</item>
+    </string-array>
+    <array name="overlines_array_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </array>
+
+    <string name="p1">Player 1</string>
+    <string name="p2">Player 2</string>
+    <string name="computer">Computer</string>
+
+    <string name="ok">OK</string>
+
+    <string name="winMsg">wins!</string>
+    <string name="player">Player</string>
+</resources>
