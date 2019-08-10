@@ -4,15 +4,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    tools:context=".MainActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
         android:orientation="horizontal">
 
         <TextView
+            style="@style/BaseText"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.60"
@@ -24,32 +26,79 @@
             android:layout_height="wrap_content"
             android:layout_weight=".40"
             android:entries="@array/overlines_array" />
+
     </LinearLayout>
 
+    <!--PVE box-->
     <LinearLayout
+        style="@style/MainCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="vertical">
 
-        <Switch
-            android:id="@+id/aiFirstSwitch"
-            android:layout_width="0dp"
+        <LinearLayout
+
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/aiFirst" />
+            android:orientation="horizontal">
+
+            <Switch
+                style="@style/BaseText"
+                android:id="@+id/aiFirstSwitch"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/aiFirst" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_marginTop="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                style="@style/BaseText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.4"
+                android:text="@string/difficulty" />
+
+            <SeekBar
+                android:id="@+id/difficultyBar"
+                style="@style/Widget.AppCompat.SeekBar.Discrete"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.6"
+                android:max="3"
+                android:progress="1" />
+
+        </LinearLayout>
+
+        <Button
+            android:layout_marginTop="10dp"
+            android:id="@+id/pveButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="onPveButtonClicked"
+            android:text="@string/pve" />
+
     </LinearLayout>
 
-    <Button
-        android:id="@+id/pveButton"
+    <!--PVP box-->
+    <LinearLayout
+        style="@style/MainCard"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="onPveButtonClicked"
-        android:text="@string/pve" />
+        android:layout_height="wrap_content">
 
-    <Button
-        android:id="@+id/pvpButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="onPvpButtonClicked"
-        android:text="@string/pvp" />
+        <Button
+            android:id="@+id/pvpButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="onPvpButtonClicked"
+            android:text="@string/pvp" />
+
+    </LinearLayout>
+
 </LinearLayout>

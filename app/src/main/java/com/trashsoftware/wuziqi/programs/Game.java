@@ -1,11 +1,7 @@
 package com.trashsoftware.wuziqi.programs;
 
-import android.os.AsyncTask;
-
 import com.trashsoftware.wuziqi.GameActivity;
-import com.trashsoftware.wuziqi.MainActivity;
-
-import java.util.Arrays;
+import com.trashsoftware.wuziqi.graphics.GuiInterface;
 
 public class Game {
 
@@ -30,7 +26,7 @@ public class Game {
 
     private RulesSet rulesSet;
 
-    private GameActivity parent;
+    private GuiInterface parent;
 
     public Game(Player p1, Player p2, RulesSet rulesSet, GameActivity parent) {
         this.player1 = p1;
@@ -48,7 +44,6 @@ public class Game {
      *
      * @param r row index
      * @param c column index
-     *          after placement
      */
     public void playerPlace(int r, int c) {
         if (terminated) {
@@ -61,8 +56,7 @@ public class Game {
                 if (wins == 0) {
                     swapPlayer();
                     if (player2.isAi()) {
-//                        aiPlace(player2);
-                        AsyncTask.execute(new Runnable() {
+                        parent.runOnBackground(new Runnable() {
                             @Override
                             public void run() {
                                 aiPlace(player2);
@@ -77,7 +71,12 @@ public class Game {
                 if (wins == 0) {
                     swapPlayer();
                     if (player1.isAi()) {
-                        aiPlace(player1);
+                        parent.runOnBackground(new Runnable() {
+                            @Override
+                            public void run() {
+                                aiPlace(player1);
+                            }
+                        });
                     }
                 }
             }
@@ -86,7 +85,7 @@ public class Game {
 
     private void aiPlace(Player player) {
         AI ai = (AI) player;
-        ai.aiMove(this, player2.isAi());
+        ai.aiMove(this, player2.isAi(), rulesSet.getDifficultyLevel());
         parent.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -116,10 +115,6 @@ public class Game {
         }
     }
 
-    public boolean isPlayer1Moving() {
-        return player1Moving;
-    }
-
     public int getChessAt(int r, int c) {
         return board[r][c];
     }
@@ -130,23 +125,31 @@ public class Game {
     }
 
     /**
-     * @return 0 if no one wining, 1 if p1 winning, 2 if p2 winning
+     * @return 0 if no one wining, 1 if p1 winning, 2 if p2 winning, 3 if tie
      */
     private int checkWinning() {
         int res = traverseCheckWin();
         if (res != 0) {
-            Player winningPlayer = res == 1 ? player1 : player2;
-            parent.showWin(res, winningPlayer);
+            if (res == 3) {
+                parent.showTie();
+            } else {
+                Player winningPlayer = res == 1 ? player1 : player2;
+                parent.showWin(res, winningPlayer);
+            }
             terminated = true;
         }
         return res;
     }
 
     private int traverseCheckWin() {
+        int blanks = 0;
         for (int r = 0; r < 15; r++) {
             for (int c = 0; c < 15; c++) {
                 int chess = board[r][c];
-                if (chess == 0) continue;
+                if (chess == 0) {  // Empty point
+                    blanks++;
+                    continue;
+                }
                 boolean[] stillConnected = new boolean[]{true, true, true, true};
                 for (int x = 1; x < 5; x++) {
                     int increasedR = r + x;
@@ -190,7 +193,7 @@ public class Game {
                 }
             }
         }
-        return 0;
+        return blanks == 0 ? 3 : 0;
     }
 
     private boolean[] checkOverlines(boolean[] stillConnected, int r, int c, int player) {
@@ -219,8 +222,6 @@ public class Game {
     }
 
     private static int overlinesNone(boolean[] stillConnected, boolean[] overlines, int player) {
-//        System.out.println(Arrays.toString(stillConnected));
-//        System.out.println(Arrays.toString(overlines));
         for (int i = 0; i < 4; i++) {
             if (stillConnected[i]) {
                 if (!overlines[i]) return player;

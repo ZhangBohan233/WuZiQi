@@ -1,10 +1,12 @@
 package com.trashsoftware.wuziqi;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.TextView;
 
+import com.trashsoftware.wuziqi.graphics.GuiInterface;
 import com.trashsoftware.wuziqi.programs.AI;
 import com.trashsoftware.wuziqi.programs.Game;
 import com.trashsoftware.wuziqi.programs.Human;
@@ -13,7 +15,7 @@ import com.trashsoftware.wuziqi.graphics.ChessboardView;
 import com.trashsoftware.wuziqi.graphics.MsDialogFragment;
 import com.trashsoftware.wuziqi.programs.RulesSet;
 
-public class GameActivity extends AppCompatActivity {
+public class GameActivity extends AppCompatActivity implements GuiInterface {
 
     private ChessboardView chessboardView;
 
@@ -32,13 +34,18 @@ public class GameActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         boolean isPve = intent.getBooleanExtra(MainActivity.PVE_KEY, false);
-        RulesSet rulesSet = new RulesSet(
-                intent.getIntExtra(MainActivity.OVERLINES_KEY, RulesSet.OVERLINES_WINNING),
-                intent.getBooleanExtra(MainActivity.AI_FIRST_KEY, false)
-        );
+
         if (isPve) {
+            RulesSet rulesSet = new RulesSet(
+                    intent.getIntExtra(MainActivity.OVERLINES_KEY, RulesSet.OVERLINES_WINNING),
+                    intent.getBooleanExtra(MainActivity.AI_FIRST_KEY, false),
+                    intent.getIntExtra(MainActivity.DIFFICULTY_KEY, 0)
+            );
             startGameOnePlayer(rulesSet);
         } else {
+            RulesSet rulesSet = new RulesSet(
+                    intent.getIntExtra(MainActivity.OVERLINES_KEY, RulesSet.OVERLINES_WINNING)
+            );
             startGameTwoPlayers(rulesSet);
         }
     }
@@ -60,6 +67,16 @@ public class GameActivity extends AppCompatActivity {
         }
         String msg = playerName + " " + getString(R.string.winMsg);
         dialogFragment.show(getSupportFragmentManager(), msg);
+    }
+
+    public void showTie() {
+        String msg = getString(R.string.tie);
+        dialogFragment.show(getSupportFragmentManager(), msg);
+    }
+
+    @Override
+    public void runOnBackground(Runnable runnable) {
+        AsyncTask.execute(runnable);
     }
 
     private void startGameOnePlayer(RulesSet rulesSet) {

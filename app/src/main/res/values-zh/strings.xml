@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">五子棋</string>
+    <string name="pve">单人游戏</string>
+    <string name="pvp">双人游戏</string>
+    
+    <string name="pref">选项</string>
+    <string name="overlines">长连规则</string>
+    <string name="aiFirst">电脑先手</string>
+    <string name="difficulty">难度</string>
+
+    <string-array name="overlines_array">
+        <item>无</item>
+        <item>输</item>
+        <item>赢</item>
+    </string-array>
+    <array name="overlines_array_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </array>
+
+    <string name="p1">玩家1</string>
+    <string name="p2">玩家2</string>
+    <string name="computer">电脑</string>
+
+    <string name="ok">确认</string>
+
+    <string name="winMsg">获胜！</string>
+    <string name="player">玩家</string>
+    <string name="tie">和局！</string>
+</resources>

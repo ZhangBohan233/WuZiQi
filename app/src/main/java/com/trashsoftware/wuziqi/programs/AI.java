@@ -1,12 +1,12 @@
 package com.trashsoftware.wuziqi.programs;
 
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
@@ -21,13 +21,19 @@ public class AI extends Player {
         return true;
     }
 
-    public void aiMove(Game game, boolean aiIsPlayer2) {
+    void aiMove(Game game, boolean aiIsPlayer2, int difficultyLevel) {
         int chess = aiIsPlayer2 ? 2 : 1;
         GameSimulator gameSimulator = new GameSimulator(game);
-//        int[] pos = gameSimulator.bestPositionLevel1(chess);
-        Position pos2 = gameSimulator.bestPositionLevel2(chess);
 
-        if (!game.innerPlace(pos2.getY(), pos2.getX())) {
+        Position pos;
+        if (difficultyLevel == 0) {
+            pos = gameSimulator.bestPositionLevel0(chess);
+        } else {
+            gameSimulator.setDifficultyLevel(difficultyLevel);
+            pos = gameSimulator.bestPositionHighLevel(chess);
+        }
+
+        if (!game.innerPlace(pos.getY(), pos.getX())) {
             throw new RuntimeException("Unexpected error");
         }
     }
@@ -36,6 +42,15 @@ public class AI extends Player {
 class GameSimulator {
     private int[][] board = new int[15][15];
     private Deque<int[]> placeSequence = new ArrayDeque<>();
+
+    private int[] horScores1 = new int[15];
+    private int[] horScores2 = new int[15];
+    private int[] verScores1 = new int[15];
+    private int[] verScores2 = new int[15];
+    private int[] backSlashScores1 = new int[29];
+    private int[] backSlashScores2 = new int[29];
+    private int[] fwdSlashScores1 = new int[29];
+    private int[] fwdSlashScores2 = new int[29];
 
     private static final SequenceHashTable scoreTable = new SequenceHashTable();
 
@@ -71,42 +86,57 @@ class GameSimulator {
                 board[r][c] = game.getChessAt(r, c);
             }
         }
+        initializeScores();
     }
 
-    private void placeChess(int r, int c, int chess) {
+    private GameSimulator() {
+        board = new int[15][15];
+    }
+
+    void setDifficultyLevel(int difficultyLevel) {
+        if (difficultyLevel == 3) {
+            searchDepth = 5;
+        } else if (difficultyLevel == 2) {
+            searchDepth = 3;
+        } else {
+            searchDepth = 1;
+        }
+    }
+
+    void placeChess(int r, int c, int chess) {
         board[r][c] = chess;
         placeSequence.push(new int[]{r, c});
     }
 
-    private void undoLastMove() {
+    void undoLastMove() {
         int[] lastMove = placeSequence.pop();
         board[lastMove[0]][lastMove[1]] = 0;
     }
 
-    Position bestPositionLevel1(int chess) {
-        return bestPositionOfOneDepth(chess);  // temporary
+    Position bestPositionLevel0(int chess) {
+        return bestPositionOfOneDepth(chess);
     }
 
-    Position bestPositionLevel2(int chess) {
-        int val = alphaBeta(searchDepth, -10_000_000, 10_000_000, chess);
+    Position bestPositionHighLevel(int chess) {
+        alphaBeta(searchDepth, -10_000_000, 10_000_000, chess);
         return nextMove;
     }
 
-//    private int[] getLastMove() {
-//        return placeSequence.peek();
-//    }
-
     private int alphaBeta(int depth, int alpha, int beta, int chess) {
         if (depth == 0) {
-            return totalScoreOfGame(chess) - totalScoreOfGame(chess == 1 ? 2 : 1);
+            return evaluate(chess);
+//            return totalScoreOfGame(chess) - totalScoreOfGame(chess == 1 ? 2 : 1);
         }
         List<Position> places = possiblePlaces(chess);
+        Collections.sort(places);  // Sorts the positions to make alpha-cut happen early
 //        System.out.println(places);
         while (!places.isEmpty()) {
             Position next = places.remove(places.size() - 1);
             placeChess(next.getY(), next.getX(), chess);
+            updateScores(next.getY(), next.getX());
             int val = -alphaBeta(depth - 1, -beta, -alpha, chess == 1 ? 2 : 1);
             undoLastMove();
+            updateScores(next.getY(), next.getX());
             if (val >= beta) {
                 return beta;
             }
@@ -121,7 +151,7 @@ class GameSimulator {
     }
 
     private Position bestPositionOfOneDepth(int chess) {
-        Position currentBest = getDefaultPosition();
+        Position currentBest = getDefaultPosition(chess);
         int highestScore = 0;
         for (int r = 0; r < 15; r++) {
             for (int c = 0; c < 15; c++) {
@@ -130,13 +160,61 @@ class GameSimulator {
                     int pointScore = scoreOfPoint(r, c, chess);
                     undoLastMove();
                     if (pointScore > highestScore) {
-                        currentBest = new Position(r, c);
+                        currentBest = new Position(r, c, chess, this);
                         highestScore = pointScore;
                     }
                 }
             }
         }
         return currentBest;
+    }
+
+    private void initializeScores() {
+        for (int i = 0; i < 15; i++) {
+            updateHorScore(i, 1);
+            updateHorScore(i, 2);
+            updateVerScore(i, 1);
+            updateHorScore(i, 2);
+        }
+        for (int i = 0; i < 29; i++) {
+            updateBackSlashScore(i, 1);
+            updateBackSlashScore(i, 2);
+            updateFwdSlashScores(i, 1);
+            updateFwdSlashScores(i, 2);
+        }
+    }
+
+    private int calculateTotalScoreOf(int chess) {
+        int score = 0;
+        if (chess == 1) {
+            for (int s : horScores1) score += s;
+            for (int s : verScores1) score += s;
+            for (int s : backSlashScores1) score += s;
+            for (int s : fwdSlashScores1) score += s;
+        } else {
+            for (int s : horScores2) score += s;
+            for (int s : verScores2) score += s;
+            for (int s : backSlashScores2) score += s;
+            for (int s : fwdSlashScores2) score += s;
+        }
+        return score;
+    }
+
+    private int evaluate(int chess) {
+        return calculateTotalScoreOf(chess) - calculateTotalScoreOf(chess == 1 ? 2 : 1);
+    }
+
+    private void updateScores(int r, int c) {
+        updateHorScore(r, 1);
+        updateHorScore(r, 2);
+        updateVerScore(c, 1);
+        updateVerScore(c, 2);
+        int backSlashId = getBackSlashId(r, c);
+        int fwdSlashId = getFwdSlashId(r, c);
+        updateBackSlashScore(backSlashId, 1);
+        updateBackSlashScore(backSlashId, 2);
+        updateFwdSlashScores(fwdSlashId, 1);
+        updateBackSlashScore(fwdSlashId, 2);
     }
 
     private List<Position> possiblePlaces(int chess) {
@@ -151,25 +229,25 @@ class GameSimulator {
                                 if (Game.inBound(i, j))
                                     if (board[i][j] != 0) {
                                         // This position is adjacent to a chess
-                                        places.add(new Position(r, c));
+                                        places.add(new Position(r, c, chess, this));
                                         break CHECK_LOOP;
                                     }
                 }
             }
         }
-        if (places.isEmpty()) places.add(getDefaultPosition());
+        if (places.isEmpty()) places.add(getDefaultPosition(chess));
         return places;
     }
 
-    private Position getDefaultPosition() {
-        if (board[7][7] == 0) return new Position(7, 7);
-        else if (board[6][7] == 0) return new Position(6, 7);
+    private Position getDefaultPosition(int chess) {
+        if (board[7][7] == 0) return new Position(7, 7, chess, this);
+        else if (board[6][7] == 0) return new Position(6, 7, chess, this);
         else {
             for (int r = 0; r < 15; r++)
                 for (int c = 0; c < 15; c++) {
-                    if (board[r][c] == 0) return new Position(r, c);
+                    if (board[r][c] == 0) return new Position(r, c, chess, this);
                 }
-            return new Position(-1, -1);
+            return new Position(-1, -1, chess, this);
         }
     }
 
@@ -230,12 +308,94 @@ class GameSimulator {
         return score;
     }
 
+    private void updateHorScore(int rowNumber, int chess) {
+        int[] row = board[rowNumber];
+        if (chess == 1) {
+            horScores1[rowNumber] = getScore(row, chess);
+        } else {
+            horScores2[rowNumber] = getScore(row, chess);
+        }
+    }
+
+    private void updateVerScore(int colNumber, int chess) {
+        int[] col = new int[15];
+        for (int r = 0; r < 15; r++) {
+            col[r] = board[r][colNumber];
+        }
+        if (chess == 1) {
+            verScores1[colNumber] = getScore(col, chess);
+        } else {
+            verScores2[colNumber] = getScore(col, chess);
+        }
+    }
+
+    private void updateBackSlashScore(int slashId, int chess) {
+        int[] slash = new int[lengthOfSlash(slashId)];  // from top-right corner to bottom-left
+
+        int startR;
+        if (slashId < 15) startR = 0;
+        else startR = slashId - 14;
+
+        int startC;
+        if (slashId < 15) startC = 14 - slashId;
+        else startC = 0;
+
+        for (int j = 0; j < slash.length; j++) {
+            int r = startR + j;
+            int c = startC + j;
+            slash[j] = board[r][c];
+        }
+        if (chess == 1) {
+            backSlashScores1[slashId] = getScore(slash, chess);
+        } else {
+            backSlashScores2[slashId] = getScore(slash, chess);
+        }
+    }
+
+    private void updateFwdSlashScores(int slashId, int chess) {
+        int[] slash = new int[lengthOfSlash(slashId)];  // from top-left corner to bottom-right
+
+        int startR;
+        if (slashId < 15) startR = slashId;
+        else startR = 14;
+
+        int startC;
+        if (slashId < 15) startC = 0;
+        else startC = slashId - 14;
+
+        for (int j = 0; j < slash.length; j++) {
+            int r = startR - j;
+            int c = startC + j;
+            slash[j] = board[r][c];
+        }
+        if (chess == 1) {
+            fwdSlashScores1[slashId] = getScore(slash, chess);
+        } else {
+            fwdSlashScores2[slashId] = getScore(slash, chess);
+        }
+    }
+
+    private static int getBackSlashId(int r, int c) {
+//        if (r < c) {
+//            return 14 - c + r;
+//        } else if (r > c) {
+//            return 14 + r - c;
+//        } else {
+//            return 14;
+//        }
+        return 14 + r - c;
+    }
+
+    private static int getFwdSlashId(int r, int c) {
+        return r + c;
+    }
+
     private static int lengthOfSlash(int x) {
         if (x < 15) return x + 1;
         else return 29 - x;
     }
 
-    private int scoreOfPoint(int r, int c, int chess) {
+    int scoreOfPoint(int r, int c, int chess) {
 
         int[] hor = new int[9];
         int[] ver = new int[9];
@@ -320,44 +480,20 @@ class GameSimulator {
                 }
             }
         }
-//        for (ChessSequence chessSequence : scoreTable) {
-//            if (containsSequence(chessSequence.getSequence(), sequence, chess)) {
-//                score += chessSequence.getScore();
-//            }
-//        }
         return score;
-    }
-
-//    private static int hashSequence(int[])
-
-    private static boolean containsSequence(int[] targetSequence, int[] sequence, int chess) {
-        OUT:
-        for (int i = 0; i < sequence.length - targetSequence.length + 1; i++) {
-            for (int j = 0; j < targetSequence.length; j++) {
-                if (chess == 1) {
-                    if (targetSequence[j] != sequence[i + j])
-                        continue OUT;
-                } else if (chess == 2) {
-                    int x = targetSequence[j] == 1 ? 2 : 0;
-                    if (x != sequence[i + j])
-                        continue OUT;
-                }
-            }
-            return true;
-        }
-        return false;
     }
 
     public static void main(String[] args) {
         initScoreList();
-//        for (ChessSequence chessSequence : scoreTable) {
-//            System.out.println(chessSequence.hashCode());
-//        }
-        ChessSequence cs1 = new ChessSequence(500, 0, 1, 1, 0, 1, 0);
-        ChessSequence cs2 = new ChessSequence(500, 0, 1, 1, 0, 1, 0);
-        System.out.println(cs1.hashCode());
-        System.out.println(cs2.hashCode());
-        System.out.println(getScore(new int[]{0, 2, 2, 2, 2, 2, 0}, 2));
+        GameSimulator gameSimulator = new GameSimulator();
+        gameSimulator.setDifficultyLevel(1);
+        gameSimulator.board[9][3] = 1;
+        gameSimulator.board[10][4] = 2;
+        gameSimulator.board[11][5] = 2;
+        gameSimulator.board[12][6] = 2;
+        gameSimulator.board[13][7] = 2;
+        System.out.println(gameSimulator.bestPositionHighLevel(2));
+//        System.out.println(gameSimulator.totalScoreOfGame(2));
     }
 
 }
@@ -372,18 +508,9 @@ class ChessSequence {
         this.sequence = sequence;
     }
 
-    int[] getSequence() {
-        return sequence;
-    }
-
     int getScore() {
         return score;
     }
-
-//    @Override
-//    public boolean equals(@Nullable Object obj) {
-//        return obj instanceof ChessSequence && this.hashCode() == obj.hashCode();
-//    }
 
     @Override
     public int hashCode() {
@@ -429,14 +556,28 @@ class SequenceHashTable {
     }
 }
 
-class Position {
+class Position implements Comparable<Position> {
     private int y;
     private int x;
-    private int score;
+    private int chess;
+    private int score = 1;
+    private GameSimulator parent;
 
-    Position(int y, int x) {
+    Position(int y, int x, int chess, GameSimulator parent) {
         this.y = y;
         this.x = x;
+        this.chess = chess;
+        this.parent = parent;
+    }
+
+    private boolean notEvaluated() {
+        return score == 1;
+    }
+
+    private void evaluateScore() {
+        parent.placeChess(y, x, chess);
+        score = parent.scoreOfPoint(y, x, chess);
+        parent.undoLastMove();
     }
 
     int getY() {
@@ -447,9 +588,16 @@ class Position {
         return x;
     }
 
+    @Override
+    public int compareTo(Position o) {
+        if (notEvaluated()) evaluateScore();
+        if (o.notEvaluated()) o.evaluateScore();
+        return this.score - o.score;
+    }
+
     @NonNull
     @Override
     public String toString() {
-        return "[" + y + ", " + x + "]";
+        return "[" + y + ", " + x + "]" + (score == 1 ? "" : score);
     }
 }
