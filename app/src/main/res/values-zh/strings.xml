@@ -22,6 +22,8 @@
     <string name="p1">玩家1</string>
     <string name="p2">玩家2</string>
     <string name="computer">电脑</string>
+    <string name="black">(黑棋)</string>
+    <string name="white">(白棋)</string>
 
     <string name="ok">确认</string>
 

@@ -22,6 +22,8 @@
     <string name="p1">Player 1</string>
     <string name="p2">Player 2</string>
     <string name="computer">Computer</string>
+    <string name="black">(Black)</string>
+    <string name="white">(White)</string>
 
     <string name="ok">OK</string>
 

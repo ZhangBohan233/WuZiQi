@@ -19,7 +19,7 @@ public class GameActivity extends AppCompatActivity implements GuiInterface {
 
     private ChessboardView chessboardView;
 
-    private TextView p1Text, p2Text;
+    private TextView p1Text, p2Text, blackText, whiteText;
 
     private MsDialogFragment dialogFragment = new MsDialogFragment();
 
@@ -31,6 +31,8 @@ public class GameActivity extends AppCompatActivity implements GuiInterface {
         chessboardView = findViewById(R.id.chessboardView);
         p1Text = findViewById(R.id.p1Text);
         p2Text = findViewById(R.id.p2Text);
+        blackText = findViewById(R.id.blackText);
+        whiteText = findViewById(R.id.whiteText);
 
         Intent intent = getIntent();
         boolean isPve = intent.getBooleanExtra(MainActivity.PVE_KEY, false);
@@ -59,12 +61,7 @@ public class GameActivity extends AppCompatActivity implements GuiInterface {
     }
 
     public void showWin(int playerNum, Player winningPlayer) {
-        String playerName;
-        if (winningPlayer.isAi()) playerName = getString(R.string.computer);
-        else {
-            if (playerNum == 1) playerName = getString(R.string.p1);
-            else playerName = getString(R.string.p2);
-        }
+        String playerName = winningPlayer.getName();
         String msg = playerName + " " + getString(R.string.winMsg);
         dialogFragment.show(getSupportFragmentManager(), msg);
     }
@@ -80,14 +77,18 @@ public class GameActivity extends AppCompatActivity implements GuiInterface {
     }
 
     private void startGameOnePlayer(RulesSet rulesSet) {
-        p1Text.setText(getString(R.string.p1));
-        p2Text.setText(getString(R.string.computer));
         setTextStyles(true);
         Game game;
         if (rulesSet.isAiFirst()) {
-            game = new Game(new AI(), new Human(), rulesSet, this);
+            p1Text.setText(getString(R.string.computer));
+            p2Text.setText(getString(R.string.player));
+            game = new Game(new AI(getString(R.string.computer)),
+                    new Human(getString(R.string.player)), rulesSet, this);
         } else {
-            game = new Game(new Human(), new AI(), rulesSet, this);
+            p1Text.setText(getString(R.string.player));
+            p2Text.setText(getString(R.string.computer));
+            game = new Game(new Human(getString(R.string.player)),
+                    new AI(getString(R.string.computer)), rulesSet, this);
         }
         chessboardView.setGame(game);
     }
@@ -96,17 +97,22 @@ public class GameActivity extends AppCompatActivity implements GuiInterface {
         p1Text.setText(getString(R.string.p1));
         p2Text.setText(getString(R.string.p2));
         setTextStyles(true);
-        Game game = new Game(new Human(), new Human(), rulesSet, this);
+        Game game = new Game(new Human(getString(R.string.p1)),
+                new Human(getString(R.string.p2)), rulesSet, this);
         chessboardView.setGame(game);
     }
 
     private void setTextStyles(boolean isP1) {
         if (isP1) {
             p1Text.setTextAppearance(R.style.FocusedText);
+            blackText.setTextAppearance(R.style.FocusedText);
             p2Text.setTextAppearance(R.style.UnfocusedText);
+            whiteText.setTextAppearance(R.style.UnfocusedText);
         } else {
             p1Text.setTextAppearance(R.style.UnfocusedText);
+            blackText.setTextAppearance(R.style.UnfocusedText);
             p2Text.setTextAppearance(R.style.FocusedText);
+            whiteText.setTextAppearance(R.style.FocusedText);
         }
     }
 }

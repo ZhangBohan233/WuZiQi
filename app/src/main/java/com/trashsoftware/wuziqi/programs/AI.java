@@ -5,14 +5,14 @@ import android.support.annotation.NonNull;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
 public class AI extends Player {
 
-    public AI() {
+    public AI(String name) {
+        super(name);
         GameSimulator.initScoreList();
     }
 
@@ -89,18 +89,16 @@ class GameSimulator {
         initializeScores();
     }
 
+    private int getChessAt(int r, int c) {
+        return board[r][c];
+    }
+
     private GameSimulator() {
         board = new int[15][15];
     }
 
     void setDifficultyLevel(int difficultyLevel) {
-        if (difficultyLevel == 3) {
-            searchDepth = 5;
-        } else if (difficultyLevel == 2) {
-            searchDepth = 3;
-        } else {
-            searchDepth = 1;
-        }
+        searchDepth = difficultyLevel;
     }
 
     void placeChess(int r, int c, int chess) {
@@ -125,7 +123,6 @@ class GameSimulator {
     private int alphaBeta(int depth, int alpha, int beta, int chess) {
         if (depth == 0) {
             return evaluate(chess);
-//            return totalScoreOfGame(chess) - totalScoreOfGame(chess == 1 ? 2 : 1);
         }
         List<Position> places = possiblePlaces(chess);
         Collections.sort(places);  // Sorts the positions to make alpha-cut happen early
@@ -214,14 +211,14 @@ class GameSimulator {
         updateBackSlashScore(backSlashId, 1);
         updateBackSlashScore(backSlashId, 2);
         updateFwdSlashScores(fwdSlashId, 1);
-        updateBackSlashScore(fwdSlashId, 2);
+        updateFwdSlashScores(fwdSlashId, 2);
     }
 
     private List<Position> possiblePlaces(int chess) {
         List<Position> places = new ArrayList<>();
         for (int r = 0; r < 15; r++) {
             for (int c = 0; c < 15; c++) {
-                if (board[r][c] == 0) {
+                if (board[r][c] == 0) {  // is empty
                     CHECK_LOOP:
                     for (int i = r - 1; i < r + 2; i++)
                         for (int j = c - 1; j < c + 2; j++)
@@ -240,72 +237,15 @@ class GameSimulator {
     }
 
     private Position getDefaultPosition(int chess) {
-        if (board[7][7] == 0) return new Position(7, 7, chess, this);
-        else if (board[6][7] == 0) return new Position(6, 7, chess, this);
+        if (getChessAt(7, 7) == 0) return new Position(7, 7, chess, this);
+        else if (getChessAt(6, 7) == 0) return new Position(6, 7, chess, this);
         else {
             for (int r = 0; r < 15; r++)
                 for (int c = 0; c < 15; c++) {
-                    if (board[r][c] == 0) return new Position(r, c, chess, this);
+                    if (getChessAt(r, c) == 0) return new Position(r, c, chess, this);
                 }
             return new Position(-1, -1, chess, this);
         }
-    }
-
-    private int totalScoreOfGame(int chess) {
-        int score = 0;
-
-        for (int r = 0; r < 15; r++) {  // rows
-            int[] row = board[r];
-            score += getScore(row, chess);
-        }
-
-        for (int c = 0; c < 15; c++) {  // columns
-            int[] col = new int[15];
-            for (int r = 0; r < 15; r++) {
-                col[r] = board[r][c];
-            }
-            score += getScore(col, chess);
-        }
-
-        for (int i = 0; i < 29; i++) {  // backward slashes, like \
-            int[] slash = new int[lengthOfSlash(i)];  // from top-right corner to bottom-left
-
-            int startR;
-            if (i < 15) startR = 0;
-            else startR = i - 14;
-
-            int startC;
-            if (i < 15) startC = 14 - i;
-            else startC = 0;
-
-            for (int j = 0; j < slash.length; j++) {
-                int r = startR + j;
-                int c = startC + j;
-                slash[j] = board[r][c];
-            }
-            score += getScore(slash, chess);
-        }
-
-        for (int i = 0; i < 29; i++) {  // forward slashes, like /
-            int[] slash = new int[lengthOfSlash(i)];  // from top-left corner to bottom-right
-
-            int startR;
-            if (i < 15) startR = i;
-            else startR = 14;
-
-            int startC;
-            if (i < 15) startC = 0;
-            else startC = i - 14;
-
-            for (int j = 0; j < slash.length; j++) {
-                int r = startR - j;
-                int c = startC + j;
-                slash[j] = board[r][c];
-            }
-            score += getScore(slash, chess);
-        }
-
-        return score;
     }
 
     private void updateHorScore(int rowNumber, int chess) {
@@ -376,13 +316,6 @@ class GameSimulator {
     }
 
     private static int getBackSlashId(int r, int c) {
-//        if (r < c) {
-//            return 14 - c + r;
-//        } else if (r > c) {
-//            return 14 + r - c;
-//        } else {
-//            return 14;
-//        }
         return 14 + r - c;
     }
 
@@ -453,28 +386,32 @@ class GameSimulator {
 
         if (chess == 1) {
             for (int i = 0; i < sequence.length - 4; i++) {  // length 5 sub-sequences
-                ChessSequence matchedSequence = scoreTable.get(ChessSequence.hashSequence(sequence, i, i + 5));
+                ChessSequence matchedSequence =
+                        scoreTable.get(ChessSequence.hashSequence(sequence, i, i + 5));
                 if (matchedSequence != null) {
                     score += matchedSequence.getScore();
                 }
             }
 
             for (int i = 0; i < sequence.length - 5; i++) {  // length 6 sub-sequences
-                ChessSequence matchedSequence = scoreTable.get(ChessSequence.hashSequence(sequence, i, i + 6));
+                ChessSequence matchedSequence =
+                        scoreTable.get(ChessSequence.hashSequence(sequence, i, i + 6));
                 if (matchedSequence != null) {
                     score += matchedSequence.getScore();
                 }
             }
         } else {
             for (int i = 0; i < sequence.length - 4; i++) {  // length 5 sub-sequences
-                ChessSequence matchedSequence = scoreTable.get(ChessSequence.hashSequenceOfChess2(sequence, i, i + 5));
+                ChessSequence matchedSequence =
+                        scoreTable.get(ChessSequence.hashSequenceOfChess2(sequence, i, i + 5));
                 if (matchedSequence != null) {
                     score += matchedSequence.getScore();
                 }
             }
 
             for (int i = 0; i < sequence.length - 5; i++) {  // length 6 sub-sequences
-                ChessSequence matchedSequence = scoreTable.get(ChessSequence.hashSequenceOfChess2(sequence, i, i + 6));
+                ChessSequence matchedSequence =
+                        scoreTable.get(ChessSequence.hashSequenceOfChess2(sequence, i, i + 6));
                 if (matchedSequence != null) {
                     score += matchedSequence.getScore();
                 }
@@ -487,12 +424,13 @@ class GameSimulator {
         initScoreList();
         GameSimulator gameSimulator = new GameSimulator();
         gameSimulator.setDifficultyLevel(1);
-        gameSimulator.board[9][3] = 1;
-        gameSimulator.board[10][4] = 2;
-        gameSimulator.board[11][5] = 2;
-        gameSimulator.board[12][6] = 2;
-        gameSimulator.board[13][7] = 2;
-        System.out.println(gameSimulator.bestPositionHighLevel(2));
+        gameSimulator.board[6][6] = 2;
+        gameSimulator.board[7][5] = 2;
+        gameSimulator.board[8][4] = 2;
+        gameSimulator.board[7][6] = 1;
+        gameSimulator.board[7][7] = 1;
+        gameSimulator.initializeScores();
+        System.out.println(gameSimulator.bestPositionHighLevel(1));
 //        System.out.println(gameSimulator.totalScoreOfGame(2));
     }
 
@@ -529,10 +467,7 @@ class ChessSequence {
     static int hashSequenceOfChess2(int[] sequence, int from, int to) {
         int code = 1;
         for (int i = from; i < to; i++) {
-            int x;
-            if (sequence[i] == 1) x = 2;
-            else if (sequence[i] == 2) x = 1;
-            else x = 0;
+            int x = sequence[i] == 0 ? 0 : 3 - sequence[i];
             code = (code << 2) | x;
         }
         return code;
