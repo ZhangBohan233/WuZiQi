@@ -55,9 +55,9 @@ class GameSimulator {
     private static final SequenceHashTable scoreTable = new SequenceHashTable();
 
     private Position nextMove;
-    private Position killMove;
+//    private Position killMove;
     private int searchDepth = 3;
-    private int killDepth = 5;
+//    private int killDepth = 5;
 
     /**
      * Copied from

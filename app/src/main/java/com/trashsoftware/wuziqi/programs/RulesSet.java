@@ -8,6 +8,7 @@ public class RulesSet {
 
     private int overlinesRule;
     private boolean aiFirst;
+    private boolean pve;
     private int difficultyLevel;
 
     public RulesSet(int overlinesRule) {
@@ -18,6 +19,7 @@ public class RulesSet {
         this.overlinesRule = overlinesRule;
         this.aiFirst = aiFirst;
         this.difficultyLevel = difficultyLevel;
+        this.pve = true;
     }
 
     int getOverlinesRule() {
@@ -30,5 +32,9 @@ public class RulesSet {
 
     int getDifficultyLevel() {
         return difficultyLevel;
+    }
+
+    boolean isPve() {
+        return pve;
     }
 }

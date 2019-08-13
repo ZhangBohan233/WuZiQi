@@ -25,6 +25,8 @@
     <string name="black">(黑棋)</string>
     <string name="white">(白棋)</string>
 
+    <string name="undo">悔棋</string>
+
     <string name="ok">确认</string>
 
     <string name="winMsg">获胜！</string>

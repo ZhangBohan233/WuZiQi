@@ -7,7 +7,7 @@ public interface GuiInterface {
     /**
      * Shows the winning dialog
      *
-     * @param playerNum which player wins, 1 or 2
+     * @param playerNum     which player wins, 1 or 2
      * @param winningPlayer the {@code Player} instance who wins
      */
     void showWin(int playerNum, Player winningPlayer);
@@ -28,6 +28,14 @@ public interface GuiInterface {
      * @param isPlayer1 {@code true} iff player1 (black) is going to play
      */
     void setActivePlayer(boolean isPlayer1);
+
+    /**
+     * Sets the enabled status for undo buttons
+     *
+     * @param p1Enable whether the undo button of p1 should be enabled
+     * @param p2Enable whether the undo button of p2 should be enabled
+     */
+    void updateUndoStatus(boolean p1Enable, boolean p2Enable);
 
     void runOnUiThread(Runnable runnable);
 

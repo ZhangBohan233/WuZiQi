@@ -65,6 +65,10 @@ public class ChessboardView extends View {
         this.game = game;
     }
 
+    public Game getGame() {
+        return game;
+    }
+
     private void setScalar() {
         initialScalar = (float) screenWidth / BLOCK_SIZE / 16;
         scalar = initialScalar;

@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.trashsoftware.wuziqi.graphics.GuiInterface;
@@ -21,6 +23,8 @@ public class GameActivity extends AppCompatActivity implements GuiInterface {
 
     private TextView p1Text, p2Text, blackText, whiteText;
 
+    private Button p1UndoBtn, p2UndoBtn;
+
     private MsDialogFragment dialogFragment = new MsDialogFragment();
 
     @Override
@@ -33,6 +37,8 @@ public class GameActivity extends AppCompatActivity implements GuiInterface {
         p2Text = findViewById(R.id.p2Text);
         blackText = findViewById(R.id.blackText);
         whiteText = findViewById(R.id.whiteText);
+        p1UndoBtn = findViewById(R.id.p1UndoBtn);
+        p2UndoBtn = findViewById(R.id.p2UndoBtn);
 
         Intent intent = getIntent();
         boolean isPve = intent.getBooleanExtra(MainActivity.PVE_KEY, false);
@@ -50,6 +56,24 @@ public class GameActivity extends AppCompatActivity implements GuiInterface {
             );
             startGameTwoPlayers(rulesSet);
         }
+    }
+
+    @Override
+    public void updateUndoStatus(boolean p1Enable, boolean p2Enable) {
+        p1UndoBtn.setEnabled(p1Enable);
+        p2UndoBtn.setEnabled(p2Enable);
+    }
+
+    public void p1Undo(View view) {
+        chessboardView.getGame().undo();
+        chessboardView.invalidate();
+        updateUndoStatus(false, false);
+    }
+
+    public void p2Undo(View view) {
+        chessboardView.getGame().undo();
+        chessboardView.invalidate();
+        updateUndoStatus(false, false);
     }
 
     public void setActivePlayer(boolean isP1) {

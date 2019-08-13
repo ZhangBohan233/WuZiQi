@@ -14,7 +14,8 @@ public class Game {
      * 2: Player 2's chess
      */
     private int[][] board = new int[15][15];
-    private int lastChessR, lastChessC;
+    private int last2ChessR = -1, last2ChessC = -1;
+    private int lastChessR = -1, lastChessC = -1;
     private int lastChessPlayer = 0;
 
     private Player player1;
@@ -62,6 +63,8 @@ public class Game {
                                 aiPlace(player2);
                             }
                         });
+                    } else {
+                        setUndoButtons();
                     }
                 }
             }
@@ -77,6 +80,8 @@ public class Game {
                                 aiPlace(player1);
                             }
                         });
+                    } else {
+                        setUndoButtons();
                     }
                 }
             }
@@ -84,6 +89,12 @@ public class Game {
     }
 
     private void aiPlace(Player player) {
+        parent.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                setUndoButtons();
+            }
+        });
         AI ai = (AI) player;
         ai.aiMove(this, player2.isAi(), rulesSet.getDifficultyLevel());
         parent.runOnUiThread(new Runnable() {
@@ -92,21 +103,22 @@ public class Game {
                 swapPlayer();
                 parent.refreshView();
                 checkWinning();
+                setUndoButtons();
             }
         });
     }
 
     boolean innerPlace(int r, int c) {
         if (board[r][c] == 0) {
+            last2ChessR = lastChessR;
+            last2ChessC = lastChessC;
+            lastChessR = r;
+            lastChessC = c;
             if (player1Moving) {
                 board[r][c] = 1;
-                lastChessR = r;
-                lastChessC = c;
                 lastChessPlayer = 1;
             } else {
                 board[r][c] = 2;
-                lastChessR = r;
-                lastChessC = c;
                 lastChessPlayer = 2;
             }
             return true;
@@ -117,6 +129,40 @@ public class Game {
 
     public int getChessAt(int r, int c) {
         return board[r][c];
+    }
+
+    private boolean isHumanPlaying() {
+        return (player1Moving && player2.isAi()) || (!player1Moving && player1.isAi());
+    }
+
+    private void setUndoButtons() {
+        if (rulesSet.isPve()) {
+            if (last2ChessR != -1 && last2ChessC != -1 && lastChessR != -1 && lastChessC != -1 &&
+                    isHumanPlaying()) {
+                parent.updateUndoStatus(!player1.isAi(), !player2.isAi());
+            } else {
+                parent.updateUndoStatus(false, false);
+            }
+        } else {
+            if (lastChessR != -1 && lastChessC != -1) {
+                parent.updateUndoStatus(!player1Moving, player1Moving);
+            }
+        }
+    }
+
+    public void undo() {
+        if (rulesSet.isPve()) {
+            board[lastChessR][lastChessC] = 0;
+            board[last2ChessR][last2ChessC] = 0;
+        } else {
+            board[lastChessR][lastChessC] = 0;
+            swapPlayer();
+        }
+        lastChessR = -1;
+        lastChessC = -1;
+        last2ChessR = -1;
+        last2ChessC = -1;
+        lastChessPlayer = 0;
     }
 
     private void swapPlayer() {
