@@ -55,7 +55,9 @@ class GameSimulator {
     private static final SequenceHashTable scoreTable = new SequenceHashTable();
 
     private Position nextMove;
+    private Position killMove;
     private int searchDepth = 3;
+    private int killDepth = 5;
 
     /**
      * Copied from
@@ -116,6 +118,14 @@ class GameSimulator {
     }
 
     Position bestPositionHighLevel(int chess) {
+//        calculateKill(killDepth, -10_000_000, 10_000_000, chess);
+//        if (killMove == null) {
+//            alphaBeta(searchDepth, -10_000_000, 10_000_000, chess);
+//            return nextMove;
+//        } else {
+//            System.out.println(111);
+//            return killMove;
+//        }
         alphaBeta(searchDepth, -10_000_000, 10_000_000, chess);
         return nextMove;
     }
@@ -126,7 +136,6 @@ class GameSimulator {
         }
         List<Position> places = possiblePlaces(chess);
         Collections.sort(places);  // Sorts the positions to make alpha-cut happen early
-//        System.out.println(places);
         while (!places.isEmpty()) {
             Position next = places.remove(places.size() - 1);
             placeChess(next.getY(), next.getX(), chess);
@@ -147,8 +156,58 @@ class GameSimulator {
         return alpha;
     }
 
+//    private int calculateKill(int depth, int alpha, int beta, int chess) {
+//        if (depth == 0) {
+//            return evaluate(chess);
+//        }
+//        List<Position> places = killPositions(chess);
+//        System.out.println(places);
+//        Collections.sort(places);  // Sorts the positions to make alpha-cut happen early
+//        while (!places.isEmpty()) {
+//            Position next = places.remove(places.size() - 1);
+//            placeChess(next.getY(), next.getX(), chess);
+//            updateScores(next.getY(), next.getX());
+//            int val = -calculateKill(depth - 1, -beta, -alpha, chess == 1 ? 2 : 1);
+//            undoLastMove();
+//            updateScores(next.getY(), next.getX());
+//            if (val >= beta) {
+//                return beta;
+//            }
+//            if (val > alpha) {
+//                alpha = val;
+//                if (depth == killDepth) {
+//                    killMove = next;
+//                }
+//            }
+//        }
+//        return alpha;
+//    }
+//
+//    private List<Position> killPositions(int chess) {
+//        List<Position> killPos = new ArrayList<>();
+//        for (int r = 0; r < 15; r++) {
+//            for (int c = 0; c < 15; c++) {
+//                if (board[r][c] == 0) {
+//                    placeChess(r, c, chess);
+//                    int pointScore = scoreOfPoint(r, c, chess);
+//                    undoLastMove();
+//                    if (pointScore >= 720) {  // is a killing point
+//                        killPos.add(new Position(r, c, chess, this));
+//                    }
+//                }
+//            }
+//        }
+//        return killPos;
+//    }
+
     private Position bestPositionOfOneDepth(int chess) {
-        Position currentBest = getDefaultPosition(chess);
+        Position currentBest;
+        try {
+            currentBest = getDefaultPosition(chess);
+        } catch (NoPositionLeftException e) {
+            throw new RuntimeException("Unexpected error. This method should not be called if no" +
+                    "spaces left");
+        }
         int highestScore = 0;
         for (int r = 0; r < 15; r++) {
             for (int c = 0; c < 15; c++) {
@@ -232,11 +291,17 @@ class GameSimulator {
                 }
             }
         }
-        if (places.isEmpty()) places.add(getDefaultPosition(chess));
+        if (places.isEmpty()) {
+            try {
+                places.add(getDefaultPosition(chess));
+            } catch (NoPositionLeftException e) {
+                // Do nothing
+            }
+        }
         return places;
     }
 
-    private Position getDefaultPosition(int chess) {
+    private Position getDefaultPosition(int chess) throws NoPositionLeftException {
         if (getChessAt(7, 7) == 0) return new Position(7, 7, chess, this);
         else if (getChessAt(6, 7) == 0) return new Position(6, 7, chess, this);
         else {
@@ -244,7 +309,7 @@ class GameSimulator {
                 for (int c = 0; c < 15; c++) {
                     if (getChessAt(r, c) == 0) return new Position(r, c, chess, this);
                 }
-            return new Position(-1, -1, chess, this);
+            throw new NoPositionLeftException();
         }
     }
 
@@ -535,4 +600,8 @@ class Position implements Comparable<Position> {
     public String toString() {
         return "[" + y + ", " + x + "]" + (score == 1 ? "" : score);
     }
+}
+
+class NoPositionLeftException extends Exception {
+
 }
