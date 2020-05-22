@@ -33,7 +33,7 @@ public class AI extends Player {
             pos = gameSimulator.bestPositionHighLevel(chess);
         }
 
-        if (!game.innerPlace(pos.getY(), pos.getX())) {
+        if (!game.innerPlace(pos.y, pos.x)) {
             throw new RuntimeException("Unexpected error");
         }
     }
@@ -52,6 +52,8 @@ class GameSimulator {
     private int[] fwdSlashScores1 = new int[29];
     private int[] fwdSlashScores2 = new int[29];
 
+    private int totalScore1, totalScore2;
+
     private static final SequenceHashTable scoreTable = new SequenceHashTable();
 
     private Position nextMove;
@@ -64,22 +66,22 @@ class GameSimulator {
      * 董红安, 2005. 《计算机五子棋博弈系统的研究与实现》
      */
     static void initScoreList() {
-        scoreTable.add(new ChessSequence(50000, 1, 1, 1, 1, 1));
-        scoreTable.add(new ChessSequence(4320, 0, 1, 1, 1, 1, 0));
-        scoreTable.add(new ChessSequence(720, 0, 1, 1, 1, 0, 0));
-        scoreTable.add(new ChessSequence(720, 0, 0, 1, 1, 1, 0));
-        scoreTable.add(new ChessSequence(720, 0, 1, 1, 0, 1, 0));
-        scoreTable.add(new ChessSequence(720, 0, 1, 0, 1, 1, 0));
-        scoreTable.add(new ChessSequence(720, 1, 1, 1, 1, 0));
-        scoreTable.add(new ChessSequence(720, 0, 1, 1, 1, 1));
-        scoreTable.add(new ChessSequence(720, 1, 1, 0, 1, 1));
-        scoreTable.add(new ChessSequence(720, 1, 0, 1, 1, 1));
-        scoreTable.add(new ChessSequence(720, 1, 1, 1, 0, 1));
-        scoreTable.add(new ChessSequence(120, 0, 0, 1, 1, 0, 0));
-        scoreTable.add(new ChessSequence(120, 0, 0, 1, 0, 1, 0));
-        scoreTable.add(new ChessSequence(120, 0, 1, 0, 1, 0, 0));
-        scoreTable.add(new ChessSequence(20, 0, 0, 0, 1, 0, 0));
-        scoreTable.add(new ChessSequence(20, 0, 0, 1, 0, 0, 0));
+        scoreTable.add(new ChessSequence(5000, 1, 1, 1, 1, 1));
+        scoreTable.add(new ChessSequence(432, 0, 1, 1, 1, 1, 0));
+        scoreTable.add(new ChessSequence(72, 0, 1, 1, 1, 0, 0));
+        scoreTable.add(new ChessSequence(72, 0, 0, 1, 1, 1, 0));
+        scoreTable.add(new ChessSequence(72, 0, 1, 1, 0, 1, 0));
+        scoreTable.add(new ChessSequence(72, 0, 1, 0, 1, 1, 0));
+        scoreTable.add(new ChessSequence(72, 1, 1, 1, 1, 0));
+        scoreTable.add(new ChessSequence(72, 0, 1, 1, 1, 1));
+        scoreTable.add(new ChessSequence(72, 1, 1, 0, 1, 1));
+        scoreTable.add(new ChessSequence(72, 1, 0, 1, 1, 1));
+        scoreTable.add(new ChessSequence(72, 1, 1, 1, 0, 1));
+        scoreTable.add(new ChessSequence(12, 0, 0, 1, 1, 0, 0));
+        scoreTable.add(new ChessSequence(12, 0, 0, 1, 0, 1, 0));
+        scoreTable.add(new ChessSequence(12, 0, 1, 0, 1, 0, 0));
+        scoreTable.add(new ChessSequence(2, 0, 0, 0, 1, 0, 0));
+        scoreTable.add(new ChessSequence(2, 0, 0, 1, 0, 0, 0));
     }
 
     GameSimulator(Game game) {
@@ -103,12 +105,12 @@ class GameSimulator {
         searchDepth = difficultyLevel;
     }
 
-    void placeChess(int r, int c, int chess) {
+    private void placeChess(int r, int c, int chess) {
         board[r][c] = chess;
         placeSequence.push(new int[]{r, c});
     }
 
-    void undoLastMove() {
+    private void undoLastMove() {
         int[] lastMove = placeSequence.pop();
         board[lastMove[0]][lastMove[1]] = 0;
     }
@@ -118,15 +120,7 @@ class GameSimulator {
     }
 
     Position bestPositionHighLevel(int chess) {
-//        calculateKill(killDepth, -10_000_000, 10_000_000, chess);
-//        if (killMove == null) {
-//            alphaBeta(searchDepth, -10_000_000, 10_000_000, chess);
-//            return nextMove;
-//        } else {
-//            System.out.println(111);
-//            return killMove;
-//        }
-        alphaBeta(searchDepth, -10_000_000, 10_000_000, chess);
+        alphaBeta(searchDepth, -1_000_000, 1_000_000, chess);
         return nextMove;
     }
 
@@ -135,14 +129,14 @@ class GameSimulator {
             return evaluate(chess);
         }
         List<Position> places = possiblePlaces(chess);
-        Collections.sort(places);  // Sorts the positions to make alpha-cut happen early
+        sortPlaces(places);  // Sorts the positions to make alpha-cut happen early
         while (!places.isEmpty()) {
             Position next = places.remove(places.size() - 1);
-            placeChess(next.getY(), next.getX(), chess);
-            updateScores(next.getY(), next.getX());
+            placeChess(next.y, next.x, chess);
+            updateScores(next.y, next.x);
             int val = -alphaBeta(depth - 1, -beta, -alpha, chess == 1 ? 2 : 1);
             undoLastMove();
-            updateScores(next.getY(), next.getX());
+            updateScores(next.y, next.x);
             if (val >= beta) {
                 return beta;
             }
@@ -156,49 +150,15 @@ class GameSimulator {
         return alpha;
     }
 
-//    private int calculateKill(int depth, int alpha, int beta, int chess) {
-//        if (depth == 0) {
-//            return evaluate(chess);
-//        }
-//        List<Position> places = killPositions(chess);
-//        System.out.println(places);
-//        Collections.sort(places);  // Sorts the positions to make alpha-cut happen early
-//        while (!places.isEmpty()) {
-//            Position next = places.remove(places.size() - 1);
-//            placeChess(next.getY(), next.getX(), chess);
-//            updateScores(next.getY(), next.getX());
-//            int val = -calculateKill(depth - 1, -beta, -alpha, chess == 1 ? 2 : 1);
-//            undoLastMove();
-//            updateScores(next.getY(), next.getX());
-//            if (val >= beta) {
-//                return beta;
-//            }
-//            if (val > alpha) {
-//                alpha = val;
-//                if (depth == killDepth) {
-//                    killMove = next;
-//                }
-//            }
-//        }
-//        return alpha;
-//    }
-//
-//    private List<Position> killPositions(int chess) {
-//        List<Position> killPos = new ArrayList<>();
-//        for (int r = 0; r < 15; r++) {
-//            for (int c = 0; c < 15; c++) {
-//                if (board[r][c] == 0) {
-//                    placeChess(r, c, chess);
-//                    int pointScore = scoreOfPoint(r, c, chess);
-//                    undoLastMove();
-//                    if (pointScore >= 720) {  // is a killing point
-//                        killPos.add(new Position(r, c, chess, this));
-//                    }
-//                }
-//            }
-//        }
-//        return killPos;
-//    }
+    private void sortPlaces(List<Position> places) {
+        // initialize scores
+        for (Position position: places) {
+            placeChess(position.y, position.x, position.chess);
+            position.score = scoreOfPoint(position.y, position.x, position.chess);
+            undoLastMove();
+        }
+        Collections.sort(places);
+    }
 
     private Position bestPositionOfOneDepth(int chess) {
         Position currentBest;
@@ -216,7 +176,7 @@ class GameSimulator {
                     int pointScore = scoreOfPoint(r, c, chess);
                     undoLastMove();
                     if (pointScore > highestScore) {
-                        currentBest = new Position(r, c, chess, this);
+                        currentBest = new Position(r, c, chess);
                         highestScore = pointScore;
                     }
                 }
@@ -241,24 +201,27 @@ class GameSimulator {
     }
 
     private int calculateTotalScoreOf(int chess) {
-        int score = 0;
-        if (chess == 1) {
-            for (int s : horScores1) score += s;
-            for (int s : verScores1) score += s;
-            for (int s : backSlashScores1) score += s;
-            for (int s : fwdSlashScores1) score += s;
-        } else {
-            for (int s : horScores2) score += s;
-            for (int s : verScores2) score += s;
-            for (int s : backSlashScores2) score += s;
-            for (int s : fwdSlashScores2) score += s;
-        }
-        return score;
+//        int score = 0;
+//        if (chess == 1) {
+//            for (int s : horScores1) score += s;
+//            for (int s : verScores1) score += s;
+//            for (int s : backSlashScores1) score += s;
+//            for (int s : fwdSlashScores1) score += s;
+//        } else {
+//            for (int s : horScores2) score += s;
+//            for (int s : verScores2) score += s;
+//            for (int s : backSlashScores2) score += s;
+//            for (int s : fwdSlashScores2) score += s;
+//        }
+//        return score;
+        return chess == 1 ? totalScore1 : totalScore2;
     }
 
     private int evaluate(int chess) {
         return calculateTotalScoreOf(chess) - calculateTotalScoreOf(chess == 1 ? 2 : 1);
     }
+
+//    private void updateScores
 
     private void updateScores(int r, int c) {
         updateHorScore(r, 1);
@@ -285,7 +248,7 @@ class GameSimulator {
                                 if (Game.inBound(i, j))
                                     if (board[i][j] != 0) {
                                         // This position is adjacent to a chess
-                                        places.add(new Position(r, c, chess, this));
+                                        places.add(new Position(r, c, chess));
                                         break CHECK_LOOP;
                                     }
                 }
@@ -302,12 +265,12 @@ class GameSimulator {
     }
 
     private Position getDefaultPosition(int chess) throws NoPositionLeftException {
-        if (getChessAt(7, 7) == 0) return new Position(7, 7, chess, this);
-        else if (getChessAt(6, 7) == 0) return new Position(6, 7, chess, this);
+        if (getChessAt(7, 7) == 0) return new Position(7, 7, chess);
+        else if (getChessAt(6, 7) == 0) return new Position(6, 7, chess);
         else {
             for (int r = 0; r < 15; r++)
                 for (int c = 0; c < 15; c++) {
-                    if (getChessAt(r, c) == 0) return new Position(r, c, chess, this);
+                    if (getChessAt(r, c) == 0) return new Position(r, c, chess);
                 }
             throw new NoPositionLeftException();
         }
@@ -315,10 +278,16 @@ class GameSimulator {
 
     private void updateHorScore(int rowNumber, int chess) {
         int[] row = board[rowNumber];
+        int newScore = getScore(row, chess);
+        int scoreDiff;
         if (chess == 1) {
-            horScores1[rowNumber] = getScore(row, chess);
+            scoreDiff = newScore - horScores1[rowNumber];
+            totalScore1 += scoreDiff;
+            horScores1[rowNumber] = newScore;
         } else {
-            horScores2[rowNumber] = getScore(row, chess);
+            scoreDiff = newScore - horScores2[rowNumber];
+            totalScore2 += scoreDiff;
+            horScores2[rowNumber] = newScore;
         }
     }
 
@@ -327,10 +296,18 @@ class GameSimulator {
         for (int r = 0; r < 15; r++) {
             col[r] = board[r][colNumber];
         }
+        int newScore = getScore(col, chess);
+        int scoreDiff;
         if (chess == 1) {
-            verScores1[colNumber] = getScore(col, chess);
+            scoreDiff = newScore - verScores1[colNumber];
+            totalScore1 += scoreDiff;
+            verScores1[colNumber] = newScore;
+//            verScores1[colNumber] = getScore(col, chess);
         } else {
-            verScores2[colNumber] = getScore(col, chess);
+            scoreDiff = newScore - verScores2[colNumber];
+            totalScore2 += scoreDiff;
+            verScores2[colNumber] = newScore;
+//            verScores2[colNumber] = getScore(col, chess);
         }
     }
 
@@ -350,10 +327,20 @@ class GameSimulator {
             int c = startC + j;
             slash[j] = board[r][c];
         }
+
+        int newScore = getScore(slash, chess);
+        int scoreDiff;
+
         if (chess == 1) {
-            backSlashScores1[slashId] = getScore(slash, chess);
+            scoreDiff = newScore - backSlashScores1[slashId];
+            totalScore1 += scoreDiff;
+            backSlashScores1[slashId] = newScore;
+//            backSlashScores1[slashId] = getScore(slash, chess);
         } else {
-            backSlashScores2[slashId] = getScore(slash, chess);
+            scoreDiff = newScore - backSlashScores2[slashId];
+            totalScore2 += scoreDiff;
+            backSlashScores2[slashId] = newScore;
+//            backSlashScores2[slashId] = getScore(slash, chess);
         }
     }
 
@@ -373,10 +360,20 @@ class GameSimulator {
             int c = startC + j;
             slash[j] = board[r][c];
         }
+
+        int newScore = getScore(slash, chess);
+        int scoreDiff;
+
         if (chess == 1) {
-            fwdSlashScores1[slashId] = getScore(slash, chess);
+            scoreDiff = newScore - fwdSlashScores1[slashId];
+            totalScore1 += scoreDiff;
+            fwdSlashScores1[slashId] = newScore;
+//            fwdSlashScores1[slashId] = getScore(slash, chess);
         } else {
-            fwdSlashScores2[slashId] = getScore(slash, chess);
+            scoreDiff = newScore - fwdSlashScores2[slashId];
+            totalScore2 += scoreDiff;
+            fwdSlashScores2[slashId] = newScore;
+//            fwdSlashScores2[slashId] = getScore(slash, chess);
         }
     }
 
@@ -393,7 +390,7 @@ class GameSimulator {
         else return 29 - x;
     }
 
-    int scoreOfPoint(int r, int c, int chess) {
+    private int scoreOfPoint(int r, int c, int chess) {
 
         int[] hor = new int[9];
         int[] ver = new int[9];
@@ -557,41 +554,27 @@ class SequenceHashTable {
 }
 
 class Position implements Comparable<Position> {
-    private int y;
-    private int x;
-    private int chess;
-    private int score = 1;
-    private GameSimulator parent;
+    final int y;
+    final int x;
+    final int chess;
+    int score = 0;
 
-    Position(int y, int x, int chess, GameSimulator parent) {
+    Position(int y, int x, int chess) {
         this.y = y;
         this.x = x;
         this.chess = chess;
-        this.parent = parent;
     }
 
-    private boolean notEvaluated() {
-        return score == 1;
-    }
-
-    private void evaluateScore() {
-        parent.placeChess(y, x, chess);
-        score = parent.scoreOfPoint(y, x, chess);
-        parent.undoLastMove();
-    }
-
-    int getY() {
-        return y;
-    }
-
-    int getX() {
-        return x;
-    }
+//    int getY() {
+//        return y;
+//    }
+//
+//    int getX() {
+//        return x;
+//    }
 
     @Override
     public int compareTo(Position o) {
-        if (notEvaluated()) evaluateScore();
-        if (o.notEvaluated()) o.evaluateScore();
         return this.score - o.score;
     }
 
