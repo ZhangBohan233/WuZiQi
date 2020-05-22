@@ -1,5 +1,7 @@
 package com.trashsoftware.wuziqi;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
@@ -98,6 +100,19 @@ public class GameActivity extends AppCompatActivity implements GuiInterface {
     @Override
     public void runOnBackground(Runnable runnable) {
         AsyncTask.execute(runnable);
+    }
+
+    @Override
+    public void onBackPressed() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.pleaseConfirm)
+                .setMessage(R.string.confirmExit)
+                .setPositiveButton(R.string.confirm, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        GameActivity.super.onBackPressed();
+                    }
+                }).setNegativeButton(R.string.cancel, null).show();
     }
 
     private void startGameOnePlayer(RulesSet rulesSet) {

@@ -27,9 +27,14 @@
 
     <string name="undo">悔棋</string>
 
-    <string name="ok">确认</string>
+    <string name="pleaseConfirm">请确认</string>
+    <string name="ok">好的</string>
+    <string name="confirm">确认</string>
+    <string name="cancel">取消</string>
 
     <string name="winMsg">获胜！</string>
     <string name="player">玩家</string>
     <string name="tie">和局！</string>
+
+    <string name="confirmExit">确认要退出游戏？</string>
 </resources>

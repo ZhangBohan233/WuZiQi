@@ -27,9 +27,14 @@
 
     <string name="undo">Undo</string>
 
+    <string name="pleaseConfirm">Please Confirm</string>
     <string name="ok">OK</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
 
     <string name="winMsg">wins!</string>
     <string name="player">Player</string>
     <string name="tie">Ties!</string>
+
+    <string name="confirmExit">Are you sure to exit?</string>
 </resources>
