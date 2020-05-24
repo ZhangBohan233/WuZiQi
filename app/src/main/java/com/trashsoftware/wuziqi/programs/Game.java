@@ -32,13 +32,7 @@ public class Game {
 
     private GuiInterface parent;
 
-    /**
-     * Keep track of undo steps.
-     * <p>
-     * Any player movement resets this count.
-     */
-    private int currentUndoCount = 0;
-    private int biggestChessCount = 0;
+    private int availableUndoCount = 0;
 
     private Deque<ChessHistory> chessHistory = new ArrayDeque<>();
 
@@ -65,8 +59,8 @@ public class Game {
             return;
         }
 //        currentUndoCount = 0;  // reset undo status
-        if (currentUndoCount > 0) currentUndoCount--;
-        biggestChessCount++;
+        if (availableUndoCount < rulesSet.getUndoStepsCount()) availableUndoCount++;
+//        if (currentUndoCount > 0) currentUndoCount--;
         if (player1Moving && !player1.isAi()) {
             if (innerPlace(r, c)) {
                 int wins = checkWinning();
@@ -117,7 +111,6 @@ public class Game {
         });
         AI ai = (AI) player;
         ai.aiMove(this, player2.isAi(), rulesSet.getDifficultyLevel());
-        biggestChessCount++;
         parent.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -170,7 +163,7 @@ public class Game {
             if (!isHumanPlaying()) {
                 parent.updateUndoStatus(false, false);
             } else {
-                if (currentUndoCount < rulesSet.getUndoStepsCount() && chessHistory.size() >= 2) {
+                if (availableUndoCount > 0 && chessHistory.size() >= 2) {
                     parent.updateUndoStatus(!player1.isAi(), !player2.isAi());
                 } else {
                     parent.updateUndoStatus(false, false);
@@ -178,7 +171,7 @@ public class Game {
             }
         } else {
             // For pvp, only 1 undo at most
-            if (currentUndoCount < Math.min(1, rulesSet.getUndoStepsCount()) &&
+            if (availableUndoCount > 0 &&
                     !chessHistory.isEmpty()) {
                 parent.updateUndoStatus(!player1Moving, player1Moving);
             } else {
@@ -188,7 +181,7 @@ public class Game {
     }
 
     public void undo() {
-        currentUndoCount++;
+        availableUndoCount--;
         if (rulesSet.isPve()) {
             ChessHistory ch1 = chessHistory.removeLast();
             ChessHistory ch2 = chessHistory.removeLast();

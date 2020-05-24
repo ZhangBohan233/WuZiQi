@@ -51,7 +51,7 @@ public class RulesSet {
     }
 
     int getUndoStepsCount() {
-        return undoStepsCount;
+        return pve ? undoStepsCount : Math.min(1, undoStepsCount);
     }
 
     public static class RulesSetBuilder {
