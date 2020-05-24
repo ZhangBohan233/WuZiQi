@@ -153,6 +153,7 @@ public class ChessboardView extends View {
     }
 
     private void drawLastChessHighlight(Canvas canvas) {
+        if (game.isTerminated()) return;
         if (game.getLastChessPlayer() == 1) {
             drawHighlight(game.getLastChessR(), game.getLastChessC(), canvas, whiteChessPaint);
         } else if (game.getLastChessPlayer() == 2) {

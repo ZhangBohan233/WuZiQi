@@ -64,18 +64,20 @@ public class GameActivity extends AppCompatActivity implements GuiInterface {
     public void updateUndoStatus(boolean p1Enable, boolean p2Enable) {
         p1UndoBtn.setEnabled(p1Enable);
         p2UndoBtn.setEnabled(p2Enable);
+        System.out.println(String.format("Set to p1 undo: %b, p2 undo: %b",
+                p1UndoBtn.isEnabled(), p2UndoBtn.isEnabled()));
     }
 
     public void p1Undo(View view) {
         chessboardView.getGame().undo();
         chessboardView.invalidate();
-        updateUndoStatus(false, false);
+//        updateUndoStatus(false, false);
     }
 
     public void p2Undo(View view) {
         chessboardView.getGame().undo();
         chessboardView.invalidate();
-        updateUndoStatus(false, false);
+//        updateUndoStatus(false, false);
     }
 
     public void setActivePlayer(boolean isP1) {

@@ -3,6 +3,9 @@ package com.trashsoftware.wuziqi.programs;
 import com.trashsoftware.wuziqi.GameActivity;
 import com.trashsoftware.wuziqi.graphics.GuiInterface;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+
 public class Game {
 
     /**
@@ -14,9 +17,9 @@ public class Game {
      * 2: Player 2's chess
      */
     private int[][] board = new int[15][15];
-    private int last2ChessR = -1, last2ChessC = -1;
-    private int lastChessR = -1, lastChessC = -1;
-    private int lastChessPlayer = 0;
+//    private int last2ChessR = -1, last2ChessC = -1;
+//    private int lastChessR = -1, lastChessC = -1;
+//    private int lastChessPlayer = 0;
 
     private Player player1;
     private Player player2;
@@ -28,6 +31,16 @@ public class Game {
     private RulesSet rulesSet;
 
     private GuiInterface parent;
+
+    /**
+     * Keep track of undo steps.
+     * <p>
+     * Any player movement resets this count.
+     */
+    private int currentUndoCount = 0;
+    private int biggestChessCount = 0;
+
+    private Deque<ChessHistory> chessHistory = new ArrayDeque<>();
 
     public Game(Player p1, Player p2, RulesSet rulesSet, GameActivity parent) {
         this.player1 = p1;
@@ -48,9 +61,12 @@ public class Game {
      */
     public void playerPlace(int r, int c) {
         if (terminated) {
-            lastChessPlayer = 0;  // clears the spot of the last chess
+//            lastChessPlayer = 0;  // clears the spot of the last chess
             return;
         }
+//        currentUndoCount = 0;  // reset undo status
+        if (currentUndoCount > 0) currentUndoCount--;
+        biggestChessCount++;
         if (player1Moving && !player1.isAi()) {
             if (innerPlace(r, c)) {
                 int wins = checkWinning();
@@ -88,6 +104,10 @@ public class Game {
         }
     }
 
+    public boolean isTerminated() {
+        return terminated;
+    }
+
     private void aiPlace(Player player) {
         parent.runOnUiThread(new Runnable() {
             @Override
@@ -97,6 +117,7 @@ public class Game {
         });
         AI ai = (AI) player;
         ai.aiMove(this, player2.isAi(), rulesSet.getDifficultyLevel());
+        biggestChessCount++;
         parent.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -110,21 +131,30 @@ public class Game {
 
     boolean innerPlace(int r, int c) {
         if (board[r][c] == 0) {
-            last2ChessR = lastChessR;
-            last2ChessC = lastChessC;
-            lastChessR = r;
-            lastChessC = c;
+//            last2ChessR = lastChessR;
+//            last2ChessC = lastChessC;
+//            lastChessR = r;
+//            lastChessC = c;
+
             if (player1Moving) {
                 board[r][c] = 1;
-                lastChessPlayer = 1;
+//                lastChessPlayer = 1;
             } else {
                 board[r][c] = 2;
-                lastChessPlayer = 2;
+//                lastChessPlayer = 2;
             }
+            addHistory(r, c, player1Moving ? 1 : 2);
+//            ChessHistory lastChess = new ChessHistory(r, c, player1Moving ? 1 : 2);
+//            chessHistory.addLast(lastChess);
             return true;
         } else {
             return false;
         }
+    }
+
+    private void addHistory(int r, int c, int player) {
+        ChessHistory lastChess = new ChessHistory(r, c, player);
+        chessHistory.addLast(lastChess);
     }
 
     public int getChessAt(int r, int c) {
@@ -137,32 +167,52 @@ public class Game {
 
     private void setUndoButtons() {
         if (rulesSet.isPve()) {
-            if (last2ChessR != -1 && last2ChessC != -1 && lastChessR != -1 && lastChessC != -1 &&
-                    isHumanPlaying()) {
-                parent.updateUndoStatus(!player1.isAi(), !player2.isAi());
-            } else {
+            if (!isHumanPlaying()) {
                 parent.updateUndoStatus(false, false);
+            } else {
+                if (currentUndoCount < rulesSet.getUndoStepsCount() && chessHistory.size() >= 2) {
+                    parent.updateUndoStatus(!player1.isAi(), !player2.isAi());
+                } else {
+                    parent.updateUndoStatus(false, false);
+                }
             }
         } else {
-            if (lastChessR != -1 && lastChessC != -1) {
+            // For pvp, only 1 undo at most
+            if (currentUndoCount < Math.min(1, rulesSet.getUndoStepsCount()) &&
+                    !chessHistory.isEmpty()) {
                 parent.updateUndoStatus(!player1Moving, player1Moving);
+            } else {
+                parent.updateUndoStatus(false, false);
             }
         }
     }
 
     public void undo() {
+        currentUndoCount++;
         if (rulesSet.isPve()) {
-            board[lastChessR][lastChessC] = 0;
-            board[last2ChessR][last2ChessC] = 0;
+            ChessHistory ch1 = chessHistory.removeLast();
+            ChessHistory ch2 = chessHistory.removeLast();
+            board[ch1.r][ch1.c] = 0;
+            board[ch2.r][ch2.c] = 0;
+//            board[lastChessR][lastChessC] = 0;
+//            board[last2ChessR][last2ChessC] = 0;
         } else {
-            board[lastChessR][lastChessC] = 0;
+            ChessHistory ch = chessHistory.removeLast();
+            board[ch.r][ch.c] = 0;
+//            board[lastChessR][lastChessC] = 0;
             swapPlayer();
         }
-        lastChessR = -1;
-        lastChessC = -1;
-        last2ChessR = -1;
-        last2ChessC = -1;
-        lastChessPlayer = 0;
+        parent.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                setUndoButtons();
+            }
+        });
+//        lastChessR = -1;
+//        lastChessC = -1;
+//        last2ChessR = -1;
+//        last2ChessC = -1;
+//        lastChessPlayer = 0;
     }
 
     private void swapPlayer() {
@@ -298,14 +348,29 @@ public class Game {
     }
 
     public int getLastChessR() {
-        return lastChessR;
+        if (chessHistory.isEmpty()) return -1;
+        else return chessHistory.getLast().r;
     }
 
     public int getLastChessC() {
-        return lastChessC;
+        if (chessHistory.isEmpty()) return -1;
+        else return chessHistory.getLast().c;
     }
 
     public int getLastChessPlayer() {
-        return lastChessPlayer;
+        if (chessHistory.isEmpty()) return 0;
+        else return chessHistory.getLast().player;
+    }
+
+    public static class ChessHistory {
+        final int r;
+        final int c;
+        final int player;
+
+        ChessHistory(int r, int c, int player) {
+            this.r = r;
+            this.c = c;
+            this.player = player;
+        }
     }
 }
