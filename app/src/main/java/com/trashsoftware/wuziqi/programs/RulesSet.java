@@ -6,6 +6,10 @@ public class RulesSet {
     static final int OVERLINES_LOST = 1;
     public static final int OVERLINES_WINNING = 2;
 
+    public static final int PVE = 1;
+    public static final int PVP = 2;
+    public static final int EVE = 3;
+
     /**
      * Unlimited undo steps.
      * <p>
@@ -15,54 +19,47 @@ public class RulesSet {
 
     private int overlinesRule;
     private boolean aiFirst;
-    private boolean pve;
+    private int gameMode;
     private int difficultyLevel;
+    private int[] eveAiLevels;
     private int undoStepsCount = 3;  // undo steps, 0 for no undo, large number for unlimited
-
-    public RulesSet(int overlinesRule) {
-        this.overlinesRule = overlinesRule;
-    }
-
-    public RulesSet(int overlinesRule, boolean aiFirst, int difficultyLevel) {
-        this.overlinesRule = overlinesRule;
-        this.aiFirst = aiFirst;
-        this.difficultyLevel = difficultyLevel;
-        this.pve = true;
-    }
 
     private RulesSet() {
 
+    }
+
+    int getGameMode() {
+        return gameMode;
     }
 
     int getOverlinesRule() {
         return overlinesRule;
     }
 
-    public boolean isAiFirst() {
+    public boolean isPveAiFirst() {
         return aiFirst;
     }
 
-    int getDifficultyLevel() {
+    public int getPveDifficultyLevel() {
         return difficultyLevel;
     }
 
+    public int[] getEveAiLevels() {
+        return eveAiLevels;
+    }
+
     boolean isPve() {
-        return pve;
+        return gameMode == PVE;
     }
 
     int getUndoStepsCount() {
-        return pve ? undoStepsCount : Math.min(1, undoStepsCount);
+        return isPve() ? undoStepsCount : Math.min(1, undoStepsCount);
     }
 
     public static class RulesSetBuilder {
         private RulesSet rulesSet = new RulesSet();
 
-        public RulesSetBuilder pve(boolean isPve) {
-            rulesSet.pve = isPve;
-            return this;
-        }
-
-        public RulesSetBuilder aiFirst(boolean aiFirst) {
+        public RulesSetBuilder pveAiFirst(boolean aiFirst) {
             rulesSet.aiFirst = aiFirst;
             return this;
         }
@@ -72,13 +69,23 @@ public class RulesSet {
             return this;
         }
 
-        public RulesSetBuilder difficultyLevel(int difficultLevel) {
+        public RulesSetBuilder pveDifficulty(int difficultLevel) {
             rulesSet.difficultyLevel = difficultLevel;
+            return this;
+        }
+
+        public RulesSetBuilder eveAiLevels(int[] aiLevels) {
+            rulesSet.eveAiLevels = aiLevels;
             return this;
         }
 
         public RulesSetBuilder undoStepsCount(int undoStepsCount) {
             rulesSet.undoStepsCount = undoStepsCount;
+            return this;
+        }
+
+        public RulesSetBuilder gameMode(int gameMode) {
+            rulesSet.gameMode = gameMode;
             return this;
         }
 

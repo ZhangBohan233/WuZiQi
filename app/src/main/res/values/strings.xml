@@ -2,11 +2,15 @@
     <string name="app_name">WuZiQi</string>
     <string name="pve">1 Player</string>
     <string name="pvp">2 Players</string>
+    <string name="eve">2 Computers</string>
     
     <string name="pref">Preferences</string>
     <string name="overlines">Overlines count as</string>
     <string name="aiFirst">Computer first</string>
-    <string name="difficulty">Difficulty</string>
+    <string name="difficulty">AI Level</string>
+
+    <string name="ai1level">AI 1 Level</string>
+    <string name="ai2level">AI 2 Level</string>
 
     <string-array name="overlines_array">
         <item>None</item>
@@ -22,6 +26,8 @@
     <string name="p1">Player 1</string>
     <string name="p2">Player 2</string>
     <string name="computer">Computer</string>
+    <string name="c1">Computer 1</string>
+    <string name="c2">Computer 2</string>
     <string name="black">(Black)</string>
     <string name="white">(White)</string>
 

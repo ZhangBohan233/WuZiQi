@@ -43,20 +43,44 @@ public class GameActivity extends AppCompatActivity implements GuiInterface {
         p2UndoBtn = findViewById(R.id.p2UndoBtn);
 
         Intent intent = getIntent();
-        boolean isPve = intent.getBooleanExtra(MainActivity.PVE_KEY, false);
+        int gameMode = intent.getIntExtra(MainActivity.PVE_KEY, 0);
 
-        if (isPve) {
-            RulesSet rulesSet = new RulesSet(
-                    intent.getIntExtra(MainActivity.OVERLINES_KEY, RulesSet.OVERLINES_WINNING),
-                    intent.getBooleanExtra(MainActivity.AI_FIRST_KEY, false),
-                    intent.getIntExtra(MainActivity.DIFFICULTY_KEY, 0)
-            );
-            startGameOnePlayer(rulesSet);
-        } else {
-            RulesSet rulesSet = new RulesSet(
-                    intent.getIntExtra(MainActivity.OVERLINES_KEY, RulesSet.OVERLINES_WINNING)
-            );
-            startGameTwoPlayers(rulesSet);
+        RulesSet rulesSet;
+        switch (gameMode) {
+            case RulesSet.PVE:
+//                rulesSet = new RulesSet(
+//                        intent.getIntExtra(MainActivity.OVERLINES_KEY, RulesSet.OVERLINES_WINNING),
+//                        intent.getBooleanExtra(MainActivity.AI_FIRST_KEY, false),
+//                        intent.getIntExtra(MainActivity.DIFFICULTY_KEY, 0)
+//                );
+                rulesSet = new RulesSet.RulesSetBuilder()
+                        .gameMode(RulesSet.PVE)
+                        .overlinesRule(intent.getIntExtra(MainActivity.OVERLINES_KEY, RulesSet.OVERLINES_WINNING))
+                        .pveAiFirst(intent.getBooleanExtra(MainActivity.AI_FIRST_KEY, false))
+                        .pveDifficulty(intent.getIntExtra(MainActivity.DIFFICULTY_KEY, 0))
+                        .build();
+                startGameOnePlayer(rulesSet);
+                break;
+            case RulesSet.PVP:
+//                rulesSet = new RulesSet(
+//                        intent.getIntExtra(MainActivity.OVERLINES_KEY, RulesSet.OVERLINES_WINNING)
+//                );
+                rulesSet = new RulesSet.RulesSetBuilder()
+                        .gameMode(RulesSet.PVP)
+                        .overlinesRule(intent.getIntExtra(MainActivity.OVERLINES_KEY, RulesSet.OVERLINES_WINNING))
+                        .build();
+                startGameTwoPlayers(rulesSet);
+                break;
+            case RulesSet.EVE:
+                rulesSet = new RulesSet.RulesSetBuilder()
+                        .gameMode(RulesSet.EVE)
+                        .overlinesRule(intent.getIntExtra(MainActivity.OVERLINES_KEY, RulesSet.OVERLINES_WINNING))
+                        .eveAiLevels(intent.getIntArrayExtra(MainActivity.EVE_LEVELS_KEY))
+                        .build();
+                startGameEvE(rulesSet);
+                break;
+            default:
+                throw new RuntimeException("No such game mode.");
         }
     }
 
@@ -120,17 +144,32 @@ public class GameActivity extends AppCompatActivity implements GuiInterface {
     private void startGameOnePlayer(RulesSet rulesSet) {
         setTextStyles(true);
         Game game;
-        if (rulesSet.isAiFirst()) {
+        if (rulesSet.isPveAiFirst()) {
             p1Text.setText(getString(R.string.computer));
             p2Text.setText(getString(R.string.player));
-            game = new Game(new AI(getString(R.string.computer)),
-                    new Human(getString(R.string.player)), rulesSet, this);
+            game = new Game(new AI(getString(R.string.computer), rulesSet.getPveDifficultyLevel()),
+                    new Human(getString(R.string.player)),
+                    rulesSet,
+                    this);
         } else {
             p1Text.setText(getString(R.string.player));
             p2Text.setText(getString(R.string.computer));
             game = new Game(new Human(getString(R.string.player)),
-                    new AI(getString(R.string.computer)), rulesSet, this);
+                    new AI(getString(R.string.computer), rulesSet.getPveDifficultyLevel()),
+                    rulesSet,
+                    this);
         }
+        chessboardView.setGame(game);
+    }
+
+    private void startGameEvE(RulesSet rulesSet) {
+        p1Text.setText(getString(R.string.c1));
+        p2Text.setText(getString(R.string.c2));
+        setTextStyles(true);
+        Game game = new Game(new AI(getString(R.string.c1), rulesSet.getEveAiLevels()[0]),
+                new AI(getString(R.string.c2), rulesSet.getEveAiLevels()[1]),
+                rulesSet,
+                this);
         chessboardView.setGame(game);
     }
 

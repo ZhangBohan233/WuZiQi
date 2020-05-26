@@ -2,11 +2,15 @@
     <string name="app_name">五子棋</string>
     <string name="pve">单人游戏</string>
     <string name="pvp">双人游戏</string>
+    <string name="eve">机机对战</string>
     
     <string name="pref">选项</string>
     <string name="overlines">长连规则</string>
     <string name="aiFirst">电脑先手</string>
-    <string name="difficulty">难度</string>
+    <string name="difficulty">AI等级</string>
+
+    <string name="ai1level">AI 1等级</string>
+    <string name="ai2level">AI 2等级</string>
 
     <string-array name="overlines_array">
         <item>无</item>
@@ -22,6 +26,8 @@
     <string name="p1">玩家1</string>
     <string name="p2">玩家2</string>
     <string name="computer">电脑</string>
+    <string name="c1">电脑1</string>
+    <string name="c2">电脑2</string>
     <string name="black">(黑棋)</string>
     <string name="white">(白棋)</string>
 

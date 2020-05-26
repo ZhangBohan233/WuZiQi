@@ -58,40 +58,60 @@ public class Game {
 //            lastChessPlayer = 0;  // clears the spot of the last chess
             return;
         }
-//        currentUndoCount = 0;  // reset undo status
+
         if (availableUndoCount < rulesSet.getUndoStepsCount()) availableUndoCount++;
-//        if (currentUndoCount > 0) currentUndoCount--;
-        if (player1Moving && !player1.isAi()) {
-            if (innerPlace(r, c)) {
-                int wins = checkWinning();
-                if (wins == 0) {
-                    swapPlayer();
-                    if (player2.isAi()) {
-                        parent.runOnBackground(new Runnable() {
-                            @Override
-                            public void run() {
-                                aiPlace(player2);
-                            }
-                        });
-                    } else {
-                        setUndoButtons();
+
+        if (player1Moving) {
+            if (player1.isAi()) {
+                // eve case
+                parent.runOnBackground(new Runnable() {
+                    @Override
+                    public void run() {
+                        aiPlace(player1);
+                    }
+                });
+            } else {
+                if (innerPlace(r, c)) {
+                    int wins = checkWinning();
+                    if (wins == 0) {
+                        swapPlayer();
+                        if (player2.isAi()) {
+                            parent.runOnBackground(new Runnable() {
+                                @Override
+                                public void run() {
+                                    aiPlace(player2);
+                                }
+                            });
+                        } else {
+                            setUndoButtons();
+                        }
                     }
                 }
             }
-        } else if (!player1Moving && !player2.isAi()) {
-            if (innerPlace(r, c)) {
-                int wins = checkWinning();
-                if (wins == 0) {
-                    swapPlayer();
-                    if (player1.isAi()) {
-                        parent.runOnBackground(new Runnable() {
-                            @Override
-                            public void run() {
-                                aiPlace(player1);
-                            }
-                        });
-                    } else {
-                        setUndoButtons();
+        } else  {
+            if (player2.isAi()) {
+                // eve case
+                parent.runOnBackground(new Runnable() {
+                    @Override
+                    public void run() {
+                        aiPlace(player2);
+                    }
+                });
+            } else {
+                if (innerPlace(r, c)) {
+                    int wins = checkWinning();
+                    if (wins == 0) {
+                        swapPlayer();
+                        if (player1.isAi()) {
+                            parent.runOnBackground(new Runnable() {
+                                @Override
+                                public void run() {
+                                    aiPlace(player1);
+                                }
+                            });
+                        } else {
+                            setUndoButtons();
+                        }
                     }
                 }
             }
@@ -110,7 +130,7 @@ public class Game {
             }
         });
         AI ai = (AI) player;
-        ai.aiMove(this, player2.isAi(), rulesSet.getDifficultyLevel());
+        ai.aiMove(this, player2.isAi());
         parent.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -159,7 +179,11 @@ public class Game {
     }
 
     private void setUndoButtons() {
-        if (rulesSet.isPve()) {
+        if (terminated) {
+            parent.updateUndoStatus(false, false);
+            return;
+        }
+        if (rulesSet.getGameMode() == RulesSet.PVE) {
             if (!isHumanPlaying()) {
                 parent.updateUndoStatus(false, false);
             } else {
@@ -169,7 +193,7 @@ public class Game {
                     parent.updateUndoStatus(false, false);
                 }
             }
-        } else {
+        } else if (rulesSet.getGameMode() == RulesSet.PVP) {
             // For pvp, only 1 undo at most
             if (availableUndoCount > 0 &&
                     !chessHistory.isEmpty()) {
@@ -177,6 +201,8 @@ public class Game {
             } else {
                 parent.updateUndoStatus(false, false);
             }
+        } else {  // EVE
+            parent.updateUndoStatus(false, false);
         }
     }
 

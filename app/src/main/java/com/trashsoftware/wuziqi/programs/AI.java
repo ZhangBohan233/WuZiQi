@@ -11,9 +11,17 @@ import java.util.List;
 
 public class AI extends Player {
 
-    public AI(String name) {
+    private final int level;
+
+    public AI(String name, int level) {
         super(name);
+
+        this.level = level;
         GameSimulator.initScoreList();
+    }
+
+    public int getLevel() {
+        return level;
     }
 
     @Override
@@ -21,15 +29,15 @@ public class AI extends Player {
         return true;
     }
 
-    void aiMove(Game game, boolean aiIsPlayer2, int difficultyLevel) {
+    void aiMove(Game game, boolean aiIsPlayer2) {
         int chess = aiIsPlayer2 ? 2 : 1;
         GameSimulator gameSimulator = new GameSimulator(game);
 
         Position pos;
-        if (difficultyLevel == 0) {
+        if (level == 0) {
             pos = gameSimulator.bestPositionLevel0(chess);
         } else {
-            gameSimulator.setDifficultyLevel(difficultyLevel);
+            gameSimulator.setDifficultyLevel(level);
             pos = gameSimulator.bestPositionHighLevel(chess);
         }
 
