@@ -17,11 +17,8 @@ public class AI extends Player {
         super(name);
 
         this.level = level;
-        GameSimulator.initScoreList();
-    }
-
-    public int getLevel() {
-        return level;
+        if (GameSimulator.notInitialized())
+            GameSimulator.initScoreList();
     }
 
     @Override
@@ -39,6 +36,11 @@ public class AI extends Player {
         } else {
             gameSimulator.setDifficultyLevel(level);
             pos = gameSimulator.bestPositionHighLevel(chess);
+        }
+
+        if (pos == null) {
+            // board full
+            return;
         }
 
         if (!game.innerPlace(pos.y, pos.x)) {
@@ -63,17 +65,24 @@ class GameSimulator {
     private int totalScore1, totalScore2;
 
     private static final SequenceHashTable scoreTable = new SequenceHashTable();
+    private static boolean initialized = false;
 
     private Position nextMove;
-//    private Position killMove;
+    //    private Position killMove;
     private int searchDepth = 3;
 //    private int killDepth = 5;
+
+
+    static boolean notInitialized() {
+        return !initialized;
+    }
 
     /**
      * Copied from
      * 董红安, 2005. 《计算机五子棋博弈系统的研究与实现》
      */
     static void initScoreList() {
+        initialized = true;
         scoreTable.add(new ChessSequence(5000, 1, 1, 1, 1, 1));
         scoreTable.add(new ChessSequence(432, 0, 1, 1, 1, 1, 0));
         scoreTable.add(new ChessSequence(72, 0, 1, 1, 1, 0, 0));
@@ -160,7 +169,7 @@ class GameSimulator {
 
     private void sortPlaces(List<Position> places) {
         // initialize scores
-        for (Position position: places) {
+        for (Position position : places) {
             placeChess(position.y, position.x, position.chess);
             position.score = scoreOfPoint(position.y, position.x, position.chess);
             undoLastMove();
