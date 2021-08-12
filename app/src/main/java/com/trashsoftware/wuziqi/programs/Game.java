@@ -1,6 +1,7 @@
 package com.trashsoftware.wuziqi.programs;
 
 import com.trashsoftware.wuziqi.GameActivity;
+import com.trashsoftware.wuziqi.R;
 import com.trashsoftware.wuziqi.graphics.GuiInterface;
 
 import java.util.ArrayDeque;
@@ -16,25 +17,24 @@ public class Game {
      * 1: Player 1's chess
      * 2: Player 2's chess
      */
-    private int[][] board = new int[15][15];
-//    private int last2ChessR = -1, last2ChessC = -1;
-//    private int lastChessR = -1, lastChessC = -1;
-//    private int lastChessPlayer = 0;
+    private final int[][] board = new int[15][15];
 
-    private Player player1;
-    private Player player2;
+    private final Player player1;
+    private final Player player2;
 
     private boolean player1Moving = true;
+    private boolean p1CanDraw = true;
+    private boolean p2CanDraw = true;
 
     private boolean terminated = false;
 
-    private RulesSet rulesSet;
+    private final RulesSet rulesSet;
 
-    private GuiInterface parent;
+    private final GuiInterface parent;
 
     private int availableUndoCount = 0;
 
-    private Deque<ChessHistory> chessHistory = new ArrayDeque<>();
+    private final Deque<ChessHistory> chessHistory = new ArrayDeque<>();
 
     public Game(Player p1, Player p2, RulesSet rulesSet, GameActivity parent) {
         this.player1 = p1;
@@ -55,7 +55,6 @@ public class Game {
      */
     public void playerPlace(int r, int c) {
         if (terminated) {
-//            lastChessPlayer = 0;  // clears the spot of the last chess
             return;
         }
 
@@ -85,6 +84,8 @@ public class Game {
                         } else {
                             setUndoButtons();
                         }
+                    } else {
+                        setUndoButtons();
                     }
                 }
             }
@@ -112,6 +113,8 @@ public class Game {
                         } else {
                             setUndoButtons();
                         }
+                    } else {
+                        setUndoButtons();
                     }
                 }
             }
@@ -122,7 +125,84 @@ public class Game {
         return terminated;
     }
 
-    private void aiPlace(Player player) {
+    private void aiPlace(final Player player) {
+        int aiId = player1Moving ? 1 : 2;
+        boolean aiWinnable = winnable(aiId);
+        boolean aiCanDraw = aiId == 1 ? p1CanDraw : p2CanDraw;
+        if (aiWinnable || !aiCanDraw) {
+            aiPlaceEssential(player);
+        } else {
+            currentPlayerAskDraw();
+        }
+    }
+
+    public void terminate() {
+        terminated = true;
+    }
+
+    /**
+     * Current playing player asks draw, wait for another player to confirm.
+     */
+    public void currentPlayerAskDraw() {
+        Player opponent = getOpponentPlayer();
+        if (opponent.isAi()) {
+            if (opponentAiDrawDecision()) {
+                opponentPlayerAcceptDraw();
+            } else {
+                opponentPlayerRefuseDraw(false);
+            }
+        } else {
+            parent.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    parent.currentPlayerAskDraw();
+                }
+            });
+        }
+    }
+
+    /**
+     * The current not playing player accepts draw, game is a tie.
+     */
+    public void opponentPlayerAcceptDraw() {
+        terminate();
+        parent.showToastMsg(player1Moving ? R.string.white : R.string.black, R.string.acceptsDraw);
+        parent.showTie();
+    }
+
+    /**
+     * The current not playing player refuses draw, game continues.
+     *
+     * @param alwaysRefuse whether the current not playing always refuse draw in this game
+     */
+    public void opponentPlayerRefuseDraw(boolean alwaysRefuse) {
+        parent.showToastMsg(player1Moving ? R.string.white : R.string.black, R.string.refusesDraw);
+
+        if (alwaysRefuse) {  // opponent player always refuse
+            if (player1Moving) {
+                p1CanDraw = false;  // current player cannot draw from now on
+            } else {
+                p2CanDraw = false;
+            }
+        }
+
+        Player movingPlayer = getCurrentPlayer();
+        if (movingPlayer.isAi()) {
+            aiPlaceEssential(movingPlayer);
+        }
+    }
+
+    private boolean opponentAiDrawDecision() {
+        int askerId = player1Moving ? 1 : 2;
+        int deciderId = player1Moving ? 2 : 1;
+        int askerWinCount = winnableCount(askerId);
+        int deciderWinCount = winnableCount(deciderId);
+        System.out.printf("Asker has %d chances and decider has %d chances.\n",
+                askerWinCount, deciderWinCount);
+        return deciderWinCount < 200 && deciderWinCount < askerWinCount;
+    }
+
+    private void aiPlaceEssential(Player player) {
         parent.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -144,21 +224,12 @@ public class Game {
 
     boolean innerPlace(int r, int c) {
         if (board[r][c] == 0) {
-//            last2ChessR = lastChessR;
-//            last2ChessC = lastChessC;
-//            lastChessR = r;
-//            lastChessC = c;
-
             if (player1Moving) {
                 board[r][c] = 1;
-//                lastChessPlayer = 1;
             } else {
                 board[r][c] = 2;
-//                lastChessPlayer = 2;
             }
             addHistory(r, c, player1Moving ? 1 : 2);
-//            ChessHistory lastChess = new ChessHistory(r, c, player1Moving ? 1 : 2);
-//            chessHistory.addLast(lastChess);
             return true;
         } else {
             return false;
@@ -181,17 +252,21 @@ public class Game {
     private void setUndoButtons() {
         if (terminated) {
             parent.updateUndoStatus(false, false);
+            parent.updateDrawStatus(false, false);
             return;
         }
         if (rulesSet.getGameMode() == RulesSet.PVE) {
             if (!isHumanPlaying()) {
                 parent.updateUndoStatus(false, false);
+                parent.updateDrawStatus(false, false);
             } else {
                 if (availableUndoCount > 0 && chessHistory.size() >= 2) {
                     parent.updateUndoStatus(!player1.isAi(), !player2.isAi());
                 } else {
                     parent.updateUndoStatus(false, false);
                 }
+                parent.updateDrawStatus(!player1.isAi() && p1CanDraw,
+                        !player2.isAi() && p2CanDraw);
             }
         } else if (rulesSet.getGameMode() == RulesSet.PVP) {
             // For pvp, only 1 undo at most
@@ -201,8 +276,10 @@ public class Game {
             } else {
                 parent.updateUndoStatus(false, false);
             }
+            parent.updateDrawStatus(player1Moving && p1CanDraw, !player1Moving && p2CanDraw);
         } else {  // EVE
             parent.updateUndoStatus(false, false);
+            parent.updateDrawStatus(false, false);
         }
     }
 
@@ -213,12 +290,9 @@ public class Game {
             ChessHistory ch2 = chessHistory.removeLast();
             board[ch1.r][ch1.c] = 0;
             board[ch2.r][ch2.c] = 0;
-//            board[lastChessR][lastChessC] = 0;
-//            board[last2ChessR][last2ChessC] = 0;
         } else {
             ChessHistory ch = chessHistory.removeLast();
             board[ch.r][ch.c] = 0;
-//            board[lastChessR][lastChessC] = 0;
             swapPlayer();
         }
         parent.runOnUiThread(new Runnable() {
@@ -227,16 +301,17 @@ public class Game {
                 setUndoButtons();
             }
         });
-//        lastChessR = -1;
-//        lastChessC = -1;
-//        last2ChessR = -1;
-//        last2ChessC = -1;
-//        lastChessPlayer = 0;
     }
 
     private void swapPlayer() {
         player1Moving = !player1Moving;
         parent.setActivePlayer(player1Moving);
+    }
+
+    boolean winnable(int player) {
+        int winnableCount = winnableCount(player);
+        System.out.println("Player " + player + " has " + winnableCount + " spaces to win.");
+        return winnableCount > 0;
     }
 
     /**
@@ -245,17 +320,76 @@ public class Game {
     private int checkWinning() {
         int res = traverseCheckWin();
         if (res != 0) {
+            terminated = true;
             if (res == 3) {
                 parent.showTie();
             } else {
                 Player winningPlayer = res == 1 ? player1 : player2;
                 parent.showWin(res, winningPlayer);
             }
-            terminated = true;
         }
         return res;
     }
 
+    private int winnableCount(int player) {
+        int count = 0;
+        int otherPlayer = player == 1 ? 2 : 1;
+        for (int r = 0; r < 15; r++) {
+            for (int c = 0; c < 15; c++) {
+                int chess = board[r][c];
+                if (chess == otherPlayer) continue;  // if not empty or player's chess, continue
+
+                if (c < 11) {
+                    boolean toRight = true;
+                    for (int x = 1; x < 5; x++) {
+                        if (board[r][c + x] == otherPlayer) {
+                            toRight = false;
+                            break;
+                        }
+                    }
+                    if (toRight) count++;
+
+                    if (r < 11) {
+                        boolean toRightDown = true;
+                        for (int x = 1; x < 5; x++) {
+                            if (board[r + x][c + x] == otherPlayer) {
+                                toRightDown = false;
+                                break;
+                            }
+                        }
+                        if (toRightDown) count++;
+                    }
+                }
+
+                if (r < 11) {
+                    boolean toDown = true;
+                    for (int x = 1; x < 5; x++) {
+                        if (board[r + x][c] == otherPlayer) {
+                            toDown = false;
+                            break;
+                        }
+                    }
+                    if (toDown) count++;
+
+                    if (c >= 4) {
+                        boolean toLeftDown = true;
+                        for (int x = 1; x < 5; x++) {
+                            if (board[r + x][c - x] == otherPlayer) {
+                                toLeftDown = false;
+                                break;
+                            }
+                        }
+                        if (toLeftDown) count++;
+                    }
+                }
+            }
+        }
+        return count;
+    }
+
+    /**
+     * @return the id of player won, 0 if no one won
+     */
     private int traverseCheckWin() {
         int blanks = 0;
         for (int r = 0; r < 15; r++) {
@@ -376,9 +510,29 @@ public class Game {
         else return chessHistory.getLast().c;
     }
 
-    public int getLastChessPlayer() {
+    public int getLastChessPlayerId() {
         if (chessHistory.isEmpty()) return 0;
         else return chessHistory.getLast().player;
+    }
+
+    public boolean isBlackMoving() {
+        return player1Moving;
+    }
+
+    public Player getCurrentPlayer() {
+        return player1Moving ? player1 : player2;
+    }
+
+    public Player getOpponentPlayer() {
+        return player1Moving ? player2 : player1;
+    }
+
+    public boolean canPlayer1Draw() {
+        return p1CanDraw;
+    }
+
+    public boolean canPlayer2Draw() {
+        return p2CanDraw;
     }
 
     public static class ChessHistory {

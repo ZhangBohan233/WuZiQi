@@ -6,6 +6,7 @@
     
     <string name="pref">Preferences</string>
     <string name="overlines">Overlines count as</string>
+    <string name="undoLimit">Undo limit</string>
     <string name="aiFirst">Computer first</string>
     <string name="difficulty">AI Level</string>
 
@@ -17,11 +18,32 @@
         <item>Lost</item>
         <item>Winning</item>
     </string-array>
+
     <array name="overlines_array_values">
         <item>0</item>
         <item>1</item>
         <item>2</item>
     </array>
+
+    <string-array name="undo_limit_array">
+        <item>None</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>5</item>
+        <item>10</item>
+        <item>Unlimited</item>
+    </string-array>
+
+    <integer-array name="undo_limit_array_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>5</item>
+        <item>10</item>
+        <item>1000</item>
+    </integer-array>
 
     <string name="p1">Player 1</string>
     <string name="p2">Player 2</string>
@@ -30,6 +52,8 @@
     <string name="c2">Computer 2</string>
     <string name="black">(Black)</string>
     <string name="white">(White)</string>
+    <string name="acceptsDraw"> accepts draw</string>
+    <string name="refusesDraw"> refuses draw</string>
 
     <string name="undo">Undo</string>
 
@@ -43,4 +67,11 @@
     <string name="tie">Ties!</string>
 
     <string name="confirmExit">Are you sure to exit?</string>
+
+    <string name="askForDraw">Ask for draw</string>
+    <string name="yourOpponent">Your opponent </string>
+    <string name="opponentAskDraw"> asks for draw!</string>
+    <string name="agree">Agree</string>
+    <string name="refuse">Refuse</string>
+    <string name="alwaysRefuse">Always Refuse</string>
 </resources>

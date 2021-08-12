@@ -30,14 +30,26 @@ public interface GuiInterface {
     void setActivePlayer(boolean isPlayer1);
 
     /**
-     * Sets the enabled status for undo buttons
+     * Sets the enabled status for undo buttons.
      *
      * @param p1Enable whether the undo button of p1 should be enabled
      * @param p2Enable whether the undo button of p2 should be enabled
      */
     void updateUndoStatus(boolean p1Enable, boolean p2Enable);
 
+    /**
+     * Sets the enabled status for draw buttons.
+     *
+     * @param p1Enable whether the draw button of p1 should be enabled
+     * @param p2Enable whether the draw button of p2 should be enabled
+     */
+    void updateDrawStatus(boolean p1Enable, boolean p2Enable);
+
     void runOnUiThread(Runnable runnable);
 
     void runOnBackground(Runnable runnable);
+
+    void currentPlayerAskDraw();
+
+    void showToastMsg(int... resIds);
 }

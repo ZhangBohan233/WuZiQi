@@ -29,6 +29,29 @@
 
     </LinearLayout>
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal">
+
+        <TextView
+            style="@style/BaseText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.60"
+            android:text="@string/undoLimit" />
+
+        <Spinner
+            android:id="@+id/undoLimitSpinner"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight=".40"
+            android:entries="@array/undo_limit_array" />
+
+    </LinearLayout>
+
     <!--PVE box-->
     <LinearLayout
         style="@style/MainCard"
@@ -43,8 +66,8 @@
             android:orientation="horizontal">
 
             <Switch
-                style="@style/BaseText"
                 android:id="@+id/aiFirstSwitch"
+                style="@style/BaseText"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -53,9 +76,9 @@
         </LinearLayout>
 
         <LinearLayout
-            android:layout_marginTop="20dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
             android:orientation="horizontal">
 
             <TextView
@@ -77,10 +100,10 @@
         </LinearLayout>
 
         <Button
-            android:layout_marginTop="10dp"
             android:id="@+id/pveButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
             android:onClick="onPveButtonClicked"
             android:text="@string/pve" />
 
@@ -109,9 +132,9 @@
         android:orientation="vertical">
 
         <LinearLayout
-            android:layout_marginTop="20dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
             android:orientation="horizontal">
 
             <TextView
@@ -133,9 +156,9 @@
         </LinearLayout>
 
         <LinearLayout
-            android:layout_marginTop="20dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
             android:orientation="horizontal">
 
             <TextView

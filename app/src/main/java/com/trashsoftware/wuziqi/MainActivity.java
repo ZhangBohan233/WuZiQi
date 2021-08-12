@@ -14,16 +14,20 @@ import com.trashsoftware.wuziqi.programs.RulesSet;
 
 public class MainActivity extends AppCompatActivity {
 
-    final static String OVERLINES_KEY = "overlines";
-    final static String PVE_KEY = "isPve";
-    final static String AI_FIRST_KEY = "aiFirst";
-    final static String DIFFICULTY_KEY = "difficulty";
-    final static String EVE_LEVELS_KEY = "aiLevels";
+    static final String OVERLINES_KEY = "overlines";
+    static final String PVE_KEY = "isPve";
+    static final String AI_FIRST_KEY = "aiFirst";
+    static final String DIFFICULTY_KEY = "difficulty";
+    static final String EVE_LEVELS_KEY = "aiLevels";
+    static final String UNDO_LIMIT_KEY = "undoLimit";
 
     private Spinner overlinesSpinner;  // 长连选项
+    private Spinner undoLimitSpinner;  // 悔棋步数限制
     private Switch aiFirstSwitch;
     private SeekBar difficultyBar, ai1LevelBar, ai2LevelBar;
     private Button pveButton, eveButton;
+
+    private int[] undoLimitValues;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +44,11 @@ public class MainActivity extends AppCompatActivity {
         overlinesSpinner = findViewById(R.id.overlinesSpinner);
         overlinesSpinner.setSelection(RulesSet.OVERLINES_WINNING);
         overlinesSpinner.setOnItemSelectedListener(new OverlinesSelectionListener());
+
+        undoLimitSpinner = findViewById(R.id.undoLimitSpinner);
+        undoLimitSpinner.setSelection(1);
+
+        undoLimitValues = getResources().getIntArray(R.array.undo_limit_array_values);
     }
 
     public void onPveButtonClicked(View view) {
@@ -61,7 +70,12 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra(AI_FIRST_KEY, isAiFirst());
         intent.putExtra(DIFFICULTY_KEY, getDifficultyLevel());
         intent.putExtra(EVE_LEVELS_KEY, getTwoAiLevels());
+        intent.putExtra(UNDO_LIMIT_KEY, getUndoLimitValue());
         startActivity(intent);
+    }
+
+    private int getUndoLimitValue() {
+        return undoLimitValues[undoLimitSpinner.getSelectedItemPosition()];
     }
 
     private int getOverlinesSelection() {

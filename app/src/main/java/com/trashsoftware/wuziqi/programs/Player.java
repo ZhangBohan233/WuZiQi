@@ -2,7 +2,7 @@ package com.trashsoftware.wuziqi.programs;
 
 public abstract class Player {
 
-    private String name;
+    private final String name;
 
     Player(String name) {
         this.name = name;

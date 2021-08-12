@@ -35,6 +35,16 @@
         </LinearLayout>
 
         <Button
+            android:id="@+id/p1DrawBtn"
+            android:onClick="p1AsksDraw"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toStartOf="@+id/p1UndoBtn"
+            android:enabled="false"
+            android:text="@string/askForDraw"
+            tools:ignore="RelativeOverlap" />
+
+        <Button
             android:id="@+id/p1UndoBtn"
             android:onClick="p1Undo"
             android:layout_width="wrap_content"
@@ -77,6 +87,16 @@
                 android:layout_marginStart="5dp"
                 android:text="@string/white" />
         </LinearLayout>
+
+        <Button
+            android:id="@+id/p2DrawBtn"
+            android:onClick="p2AsksDraw"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toStartOf="@+id/p2UndoBtn"
+            android:enabled="false"
+            android:text="@string/askForDraw"
+            tools:ignore="RelativeOverlap" />
 
         <Button
             android:id="@+id/p2UndoBtn"

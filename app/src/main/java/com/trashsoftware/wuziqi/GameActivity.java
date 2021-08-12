@@ -6,9 +6,11 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.TooltipCompat;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.trashsoftware.wuziqi.graphics.GuiInterface;
 import com.trashsoftware.wuziqi.programs.AI;
@@ -25,9 +27,9 @@ public class GameActivity extends AppCompatActivity implements GuiInterface {
 
     private TextView p1Text, p2Text, blackText, whiteText;
 
-    private Button p1UndoBtn, p2UndoBtn;
+    private Button p1UndoBtn, p2UndoBtn, p1DrawBtn, p2DrawBtn;
 
-    private MsDialogFragment dialogFragment = new MsDialogFragment();
+    private final MsDialogFragment dialogFragment = new MsDialogFragment();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +43,8 @@ public class GameActivity extends AppCompatActivity implements GuiInterface {
         whiteText = findViewById(R.id.whiteText);
         p1UndoBtn = findViewById(R.id.p1UndoBtn);
         p2UndoBtn = findViewById(R.id.p2UndoBtn);
+        p1DrawBtn = findViewById(R.id.p1DrawBtn);
+        p2DrawBtn = findViewById(R.id.p2DrawBtn);
 
         Intent intent = getIntent();
         int gameMode = intent.getIntExtra(MainActivity.PVE_KEY, 0);
@@ -48,26 +52,20 @@ public class GameActivity extends AppCompatActivity implements GuiInterface {
         RulesSet rulesSet;
         switch (gameMode) {
             case RulesSet.PVE:
-//                rulesSet = new RulesSet(
-//                        intent.getIntExtra(MainActivity.OVERLINES_KEY, RulesSet.OVERLINES_WINNING),
-//                        intent.getBooleanExtra(MainActivity.AI_FIRST_KEY, false),
-//                        intent.getIntExtra(MainActivity.DIFFICULTY_KEY, 0)
-//                );
                 rulesSet = new RulesSet.RulesSetBuilder()
                         .gameMode(RulesSet.PVE)
                         .overlinesRule(intent.getIntExtra(MainActivity.OVERLINES_KEY, RulesSet.OVERLINES_WINNING))
+                        .undoStepsCount(intent.getIntExtra(MainActivity.UNDO_LIMIT_KEY, RulesSet.DEFAULT_UNDO_LIMIT))
                         .pveAiFirst(intent.getBooleanExtra(MainActivity.AI_FIRST_KEY, false))
                         .pveDifficulty(intent.getIntExtra(MainActivity.DIFFICULTY_KEY, 0))
                         .build();
                 startGameOnePlayer(rulesSet);
                 break;
             case RulesSet.PVP:
-//                rulesSet = new RulesSet(
-//                        intent.getIntExtra(MainActivity.OVERLINES_KEY, RulesSet.OVERLINES_WINNING)
-//                );
                 rulesSet = new RulesSet.RulesSetBuilder()
                         .gameMode(RulesSet.PVP)
                         .overlinesRule(intent.getIntExtra(MainActivity.OVERLINES_KEY, RulesSet.OVERLINES_WINNING))
+                        .undoStepsCount(intent.getIntExtra(MainActivity.UNDO_LIMIT_KEY, RulesSet.DEFAULT_UNDO_LIMIT))
                         .build();
                 startGameTwoPlayers(rulesSet);
                 break;
@@ -88,9 +86,14 @@ public class GameActivity extends AppCompatActivity implements GuiInterface {
     public void updateUndoStatus(boolean p1Enable, boolean p2Enable) {
         p1UndoBtn.setEnabled(p1Enable);
         p2UndoBtn.setEnabled(p2Enable);
-//        System.out.println(String.format("Set to p1 undo: %b, p2 undo: %b",
-//                p1UndoBtn.isEnabled(), p2UndoBtn.isEnabled()));
     }
+
+    @Override
+    public void updateDrawStatus(boolean p1Enable, boolean p2Enable) {
+        p1DrawBtn.setEnabled(p1Enable);
+        p2DrawBtn.setEnabled(p2Enable);
+    }
+
 
     public void p1Undo(View view) {
         chessboardView.getGame().undo();
@@ -102,6 +105,14 @@ public class GameActivity extends AppCompatActivity implements GuiInterface {
         chessboardView.getGame().undo();
         chessboardView.invalidate();
 //        updateUndoStatus(false, false);
+    }
+
+    public void p1AsksDraw(View view) {
+        chessboardView.getGame().currentPlayerAskDraw();
+    }
+
+    public void p2AsksDraw(View view) {
+        chessboardView.getGame().currentPlayerAskDraw();
     }
 
     public void setActivePlayer(boolean isP1) {
@@ -121,6 +132,47 @@ public class GameActivity extends AppCompatActivity implements GuiInterface {
     public void showTie() {
         String msg = getString(R.string.tie);
         dialogFragment.show(getSupportFragmentManager(), msg);
+    }
+
+    public void currentPlayerAskDraw() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setMessage(
+                getString(R.string.yourOpponent) +
+                getString(chessboardView.getGame().isBlackMoving() ? R.string.black : R.string.white) +
+                getString(R.string.opponentAskDraw));
+
+        builder.setPositiveButton(R.string.agree, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                chessboardView.getGame().opponentPlayerAcceptDraw();
+            }
+        });
+
+        builder.setNegativeButton(R.string.refuse, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                chessboardView.getGame().opponentPlayerRefuseDraw(false);
+            }
+        });
+
+        builder.setNeutralButton(R.string.alwaysRefuse, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                chessboardView.getGame().opponentPlayerRefuseDraw(true);
+            }
+        });
+
+        builder.show();
+    }
+
+    public void showToastMsg(int... resIds) {
+        StringBuilder builder = new StringBuilder();
+        for (int id : resIds) {
+            builder.append(getString(id));
+        }
+        Toast toast = Toast.makeText(this, builder.toString(), Toast.LENGTH_SHORT);
+        toast.show();
     }
 
     @Override

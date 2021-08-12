@@ -6,6 +6,7 @@
     
     <string name="pref">选项</string>
     <string name="overlines">长连规则</string>
+    <string name="undoLimit">悔棋次数</string>
     <string name="aiFirst">电脑先手</string>
     <string name="difficulty">AI等级</string>
 
@@ -17,11 +18,22 @@
         <item>输</item>
         <item>赢</item>
     </string-array>
-    <array name="overlines_array_values">
-        <item>0</item>
+
+<!--    <array name="overlines_array_values">-->
+<!--        <item>0</item>-->
+<!--        <item>1</item>-->
+<!--        <item>2</item>-->
+<!--    </array>-->
+
+    <string-array name="undo_limit_array">
+        <item>不允许</item>
         <item>1</item>
         <item>2</item>
-    </array>
+        <item>3</item>
+        <item>5</item>
+        <item>10</item>
+        <item>无限制</item>
+    </string-array>
 
     <string name="p1">玩家1</string>
     <string name="p2">玩家2</string>
@@ -30,6 +42,8 @@
     <string name="c2">电脑2</string>
     <string name="black">(黑棋)</string>
     <string name="white">(白棋)</string>
+    <string name="acceptsDraw">同意和局</string>
+    <string name="refusesDraw">拒绝和局</string>
 
     <string name="undo">悔棋</string>
 
@@ -43,4 +57,11 @@
     <string name="tie">和局！</string>
 
     <string name="confirmExit">确认要退出游戏？</string>
+
+    <string name="askForDraw">请求和局</string>
+    <string name="yourOpponent">对方</string>
+    <string name="opponentAskDraw">请求和局！</string>
+    <string name="agree">同意</string>
+    <string name="refuse">拒绝</string>
+    <string name="alwaysRefuse">决不同意</string>
 </resources>

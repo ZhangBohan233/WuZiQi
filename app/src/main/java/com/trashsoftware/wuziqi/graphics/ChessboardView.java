@@ -154,9 +154,9 @@ public class ChessboardView extends View {
 
     private void drawLastChessHighlight(Canvas canvas) {
         if (game.isTerminated()) return;
-        if (game.getLastChessPlayer() == 1) {
+        if (game.getLastChessPlayerId() == 1) {
             drawHighlight(game.getLastChessR(), game.getLastChessC(), canvas, whiteChessPaint);
-        } else if (game.getLastChessPlayer() == 2) {
+        } else if (game.getLastChessPlayerId() == 2) {
             drawHighlight(game.getLastChessR(), game.getLastChessC(), canvas, blackChessPaint);
         }
     }

@@ -6,6 +6,8 @@ public class RulesSet {
     static final int OVERLINES_LOST = 1;
     public static final int OVERLINES_WINNING = 2;
 
+    public static final int DEFAULT_UNDO_LIMIT = 1;
+
     public static final int PVE = 1;
     public static final int PVP = 2;
     public static final int EVE = 3;
